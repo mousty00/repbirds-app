@@ -5,6 +5,7 @@ import '../../core/l10n/l10n.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/async_view.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/ui.dart';
 import '../../data/providers.dart';
 import '../../data/workout_repository.dart';
@@ -115,34 +116,37 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       itemBuilder: (_, i) {
                         final e = filtered[i];
                         final mine = e.createdBy == me.username;
-                        return SoftCard(
-                          padding: const EdgeInsets.all(14),
-                          radius: AppRadius.md + 2,
-                          child: Row(
-                            children: [
-                              IconChip(icon: _iconFor(e.muscleGroup), color: _colorFor(i)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(e.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                    Text(
-                                      [muscleGroupLabel(e.muscleGroup), if (e.description?.isNotEmpty == true) e.description!].join(' · '),
-                                      style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
+                        return FadeInUp(
+                          index: i,
+                          child: SoftCard(
+                            padding: const EdgeInsets.all(14),
+                            radius: AppRadius.md + 2,
+                            child: Row(
+                              children: [
+                                IconChip(icon: _iconFor(e.muscleGroup), color: _colorFor(i)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(e.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                      Text(
+                                        [muscleGroupLabel(e.muscleGroup), if (e.description?.isNotEmpty == true) e.description!].join(' · '),
+                                        style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              if (!e.isPublic) Tag(tr('Privato'), color: AppColors.inkSoft),
-                              if (mine)
-                                IconButton(
-                                  icon: Icon(Icons.delete_outline_rounded, color: AppColors.muted),
-                                  onPressed: () => _delete(e),
-                                ),
-                            ],
+                                if (!e.isPublic) Tag(tr('Privato'), color: AppColors.inkSoft),
+                                if (mine)
+                                  IconButton(
+                                    icon: Icon(Icons.delete_outline_rounded, color: AppColors.muted),
+                                    onPressed: () => _delete(e),
+                                  ),
+                              ],
+                            ),
                           ),
                         );
                       },

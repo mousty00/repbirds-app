@@ -6,6 +6,7 @@ import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/ui.dart';
+import '../../core/widgets/motion.dart';
 import '../../data/providers.dart';
 import '../../models/group.dart';
 import '../../models/workout.dart';
@@ -70,13 +71,13 @@ class HomeScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              const _Now(),
+              const FadeInUp(child: _Now()),
               const SizedBox(height: 14),
-              const _WeekTiles(),
+              const FadeInUp(index: 1, child: _WeekTiles()),
                   ],
                 ),
               ),
-              const Upcoming(),
+              const FadeInUp(index: 2, child: Upcoming()),
             ],
           ),
         ),

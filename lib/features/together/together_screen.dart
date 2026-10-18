@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/ui.dart';
+import '../../core/widgets/motion.dart';
 import '../../data/providers.dart';
 import '../../models/group.dart';
 import '../../models/social.dart';
@@ -112,8 +113,11 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
       SearchPill(controller: _search, hint: tr('Cerca nei tuoi gruppi'), onChanged: (v) => setState(() => _q = v.trim().toLowerCase())),
       const SizedBox(height: 14),
       if (shown.isEmpty) EmptyState(icon: Icons.search_off_rounded, title: tr('Nessun risultato')),
-      for (final g in shown)
-        Padding(padding: const EdgeInsets.only(bottom: 10), child: _GroupRow(group: g)),
+      for (final (i, g) in shown.indexed)
+        FadeInUp(
+          index: i,
+          child: Padding(padding: const EdgeInsets.only(bottom: 10), child: _GroupRow(group: g)),
+        ),
     ];
   }
 
@@ -131,7 +135,11 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
               )
             : Column(
                 children: [
-                  for (final p in list) Padding(padding: const EdgeInsets.only(bottom: 14), child: PostCard(post: p)),
+                  for (final (i, p) in list.indexed)
+                    FadeInUp(
+                      index: i,
+                      child: Padding(padding: const EdgeInsets.only(bottom: 14), child: PostCard(post: p)),
+                    ),
                 ],
               ),
       );

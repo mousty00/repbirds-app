@@ -35,6 +35,7 @@ import '../../features/workouts/workout_detail_screen.dart';
 import '../../features/workouts/workout_form_screen.dart';
 import '../../features/workouts/workout_session_screen.dart';
 import '../../models/workout.dart';
+import '../widgets/motion.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
 
@@ -82,8 +83,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
-      GoRoute(path: '/welcome', builder: (_, _) => const WelcomeScreen()),
+      GoRoute(path: '/splash', pageBuilder: (_, s) => fadePage(s, const SplashScreen())),
+      GoRoute(path: '/welcome', pageBuilder: (_, s) => fadePage(s, const WelcomeScreen())),
       GoRoute(path: '/auth/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/auth/signup', builder: (_, _) => const SignupScreen()),
       GoRoute(
@@ -96,7 +97,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/auth/forgot', builder: (_, _) => const ForgotPasswordScreen()),
 
       StatefulShellRoute.indexedStack(
-        builder: (_, _, shell) => AppShell(shell: shell),
+        // Dopo splash o login le tab entrano in dissolvenza, non da destra.
+        pageBuilder: (_, s, shell) => fadePage(s, AppShell(shell: shell)),
         branches: [
           StatefulShellBranch(routes: [GoRoute(path: '/home', builder: (_, _) => const HomeScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: '/workouts', builder: (_, _) => const BackToHome(child: WorkoutsScreen()))]),

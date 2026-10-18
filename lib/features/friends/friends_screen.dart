@@ -8,6 +8,7 @@ import '../../core/l10n/l10n.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/async_view.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/ui.dart';
 import '../../data/providers.dart';
 import '../../data/social_repository.dart';
@@ -117,15 +118,18 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                                   itemBuilder: (_, i) {
                                     final other = list[i].other(me.username);
-                                    return UserRow(
-                                      user: other,
-                                      trailing: PopupMenuButton<String>(
-                                        icon: Icon(Icons.more_horiz_rounded, color: AppColors.muted),
-                                        color: AppColors.card,
-                                        onSelected: (_) => _block(list[i], other.username),
-                                        itemBuilder: (_) => [
-                                          PopupMenuItem(value: 'block', child: Text(tr('Blocca'), style: const TextStyle(color: AppColors.danger))),
-                                        ],
+                                    return FadeInUp(
+                                      index: i,
+                                      child: UserRow(
+                                        user: other,
+                                        trailing: PopupMenuButton<String>(
+                                          icon: Icon(Icons.more_horiz_rounded, color: AppColors.muted),
+                                          color: AppColors.card,
+                                          onSelected: (_) => _block(list[i], other.username),
+                                          itemBuilder: (_) => [
+                                            PopupMenuItem(value: 'block', child: Text(tr('Blocca'), style: const TextStyle(color: AppColors.danger))),
+                                          ],
+                                        ),
                                       ),
                                     );
                                   },
@@ -144,7 +148,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                                   itemCount: list.length,
                                   separatorBuilder: (_, _) => const SizedBox(height: 10),
-                                  itemBuilder: (_, i) => FriendRequestTile(request: list[i]),
+                                  itemBuilder: (_, i) => FadeInUp(index: i, child: FriendRequestTile(request: list[i])),
                                 ),
                         ),
                       ),

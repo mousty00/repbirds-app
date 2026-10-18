@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/ui.dart';
 import '../auth/session.dart';
 import '../workouts/saved_session.dart';
@@ -20,9 +22,30 @@ class AppShell extends ConsumerStatefulWidget {
   ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends ConsumerState<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderStateMixin {
   /// Una volta per avvio: se il sistema aveva chiuso l'app a metà allenamento, lo riapre.
   static bool _resumeChecked = false;
+
+  /// Cambio di tab: la nuova entra in dissolvenza salendo di poco.
+  late final _tabIn = AnimationController(vsync: this, duration: AppMotion.medium, value: 1);
+  late final _tabCurve = CurvedAnimation(parent: _tabIn, curve: AppMotion.curve);
+  late int _index = widget.shell.currentIndex;
+
+  @override
+  void didUpdateWidget(AppShell old) {
+    super.didUpdateWidget(old);
+    final index = widget.shell.currentIndex;
+    if (index == _index) return;
+    _index = index;
+    if (!AppMotion.reduced(context)) _tabIn.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _tabCurve.dispose();
+    _tabIn.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -47,7 +70,13 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      body: shell,
+      body: FadeTransition(
+        opacity: _tabCurve,
+        child: SlideTransition(
+          position: Tween(begin: const Offset(0, 0.015), end: Offset.zero).animate(_tabCurve),
+          child: shell,
+        ),
+      ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.only(bottom: 12),
         child: Center(
@@ -61,7 +90,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                 return me == null ? const SizedBox.shrink() : UserAvatar(username: me.username, imageUrl: me.image, size: 48);
               },
             ),
-            onTap: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
+            onTap: (i) {
+              if (i != shell.currentIndex) HapticFeedback.selectionClick();
+              shell.goBranch(i, initialLocation: i == shell.currentIndex);
+            },
             onCreate: () => showCreateSheet(context),
           ),
         ),
@@ -123,13 +155,16 @@ class FloatingNavBar extends StatelessWidget {
                 child: Semantics(
                   label: tr('Crea'),
                   button: true,
-                  child: GestureDetector(
-                    onTap: onCreate,
-                    child: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.brand),
-                      child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+                  child: Pressable(
+                    scale: 0.9,
+                    child: GestureDetector(
+                      onTap: onCreate,
+                      child: Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.brand),
+                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+                      ),
                     ),
                   ),
                 ),
@@ -166,24 +201,35 @@ class _NavItem extends StatelessWidget {
       label: label,
       selected: selected,
       button: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          width: selected ? 60 : 52,
-          height: selected ? 60 : 52,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: selected ? AppColors.ink : AppColors.bg,
-            boxShadow: selected
-                ? [BoxShadow(color: AppColors.ink.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6))]
-                : null,
+      child: Pressable(
+        scale: 0.92,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            width: selected ? 60 : 52,
+            height: selected ? 60 : 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selected ? AppColors.ink : AppColors.bg,
+              boxShadow: selected
+                  ? [BoxShadow(color: AppColors.ink.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6))]
+                  : null,
+            ),
+            padding: picture != null ? const EdgeInsets.all(3) : null,
+            child: picture != null
+                ? ClipOval(child: FittedBox(fit: BoxFit.cover, child: picture))
+                : AnimatedSwitcher(
+                    duration: AppMotion.medium,
+                    child: Icon(
+                      icon,
+                      key: ValueKey(selected),
+                      color: selected ? AppColors.onInk : AppColors.inkSoft,
+                      size: 24,
+                    ),
+                  ),
           ),
-          padding: picture != null ? const EdgeInsets.all(3) : null,
-          child: picture != null
-              ? ClipOval(child: FittedBox(fit: BoxFit.cover, child: picture))
-              : Icon(icon, color: selected ? AppColors.onInk : AppColors.inkSoft, size: 24),
         ),
       ),
     );

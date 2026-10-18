@@ -7,6 +7,7 @@ import '../../features/auth/session.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'app_image.dart';
+import 'motion.dart';
 
 /// Card bianca arrotondata con ombra morbida.
 class SoftCard extends StatelessWidget {
@@ -32,7 +33,7 @@ class SoftCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final shape = BorderRadius.circular(radius);
     final color = this.color ?? AppColors.card;
-    return DecoratedBox(
+    final card = DecoratedBox(
       decoration: BoxDecoration(
         color: color,
         borderRadius: shape,
@@ -50,6 +51,7 @@ class SoftCard extends StatelessWidget {
         ),
       ),
     );
+    return Pressable(enabled: onTap != null, scale: 0.98, child: card);
   }
 }
 
@@ -107,9 +109,13 @@ class CircleIconButton extends StatelessWidget {
         ),
       ),
     );
-    return DecoratedBox(
-      decoration: const BoxDecoration(shape: BoxShape.circle, boxShadow: AppShadows.soft),
-      child: tooltip == null ? button : Tooltip(message: tooltip!, child: button),
+    return Pressable(
+      enabled: onTap != null,
+      scale: 0.9,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(shape: BoxShape.circle, boxShadow: AppShadows.soft),
+        child: tooltip == null ? button : Tooltip(message: tooltip!, child: button),
+      ),
     );
   }
 }
@@ -131,7 +137,7 @@ class PillActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    final button = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(40),
         boxShadow: AppShadows.float,
@@ -153,12 +159,16 @@ class PillActionButton extends StatelessWidget {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(color: AppColors.ink, shape: BoxShape.circle),
-                  child: loading
-                      ? Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onInk),
-                        )
-                      : Icon(icon, color: AppColors.onInk),
+                  child: AnimatedSwitcher(
+                    duration: AppMotion.medium,
+                    child: loading
+                        ? Padding(
+                            key: const ValueKey('loading'),
+                            padding: const EdgeInsets.all(16),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onInk),
+                          )
+                        : Icon(icon, color: AppColors.onInk),
+                  ),
                 ),
               ],
             ),
@@ -166,6 +176,7 @@ class PillActionButton extends StatelessWidget {
         ),
       ),
     );
+    return Pressable(enabled: !loading && onPressed != null, scale: 0.97, child: button);
   }
 }
 
@@ -188,22 +199,31 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton(
-      style: color == null ? null : FilledButton.styleFrom(backgroundColor: color),
-      onPressed: loading ? null : onPressed,
-      child: loading
-          ? SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2.2, color: AppColors.onInk),
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 10)],
-                Text(label),
-              ],
-            ),
+    final enabled = !loading && onPressed != null;
+    return Pressable(
+      enabled: enabled,
+      scale: 0.97,
+      child: FilledButton(
+        style: color == null ? null : FilledButton.styleFrom(backgroundColor: color),
+        onPressed: loading ? null : onPressed,
+        child: AnimatedSwitcher(
+          duration: AppMotion.medium,
+          child: loading
+              ? SizedBox(
+                  key: const ValueKey('loading'),
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.2, color: AppColors.onInk),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 10)],
+                    Text(label),
+                  ],
+                ),
+        ),
+      ),
     );
   }
 }

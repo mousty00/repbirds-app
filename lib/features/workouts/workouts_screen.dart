@@ -11,6 +11,7 @@ import '../../models/workout.dart';
 import '../auth/session.dart';
 import '../shell/app_shell.dart';
 import '../../core/widgets/skeleton.dart';
+import '../../core/widgets/motion.dart';
 
 /// Tab Allenati: le tue schede e la Corsa. Con [explore] invece le schede
 /// pubbliche degli altri, da cui partire per una nuova.
@@ -130,7 +131,7 @@ class WorkoutsScreen extends ConsumerWidget {
                     sliver: SliverList.separated(
                       itemCount: shown.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) => WorkoutCard(workout: shown[i], index: i, showOwner: explore),
+                      itemBuilder: (_, i) => FadeInUp(index: i, child: WorkoutCard(workout: shown[i], index: i, showOwner: explore)),
                     ),
                   );
                 },

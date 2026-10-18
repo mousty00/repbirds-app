@@ -6,6 +6,7 @@ import '../../core/network/api_exception.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/async_view.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/ui.dart';
 import '../../data/providers.dart';
 import '../../data/workout_repository.dart';
@@ -50,75 +51,80 @@ class HistoryScreen extends ConsumerWidget {
                     return ListView(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                       children: [
-                        SoftCard(
-                          color: AppColors.blue,
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _Summary(value: '${list.length}', label: tr('sessioni totali')),
-                              ),
-                              Expanded(
-                                child: _Summary(value: formatDuration(total), label: tr('tempo allenato')),
-                              ),
-                            ],
+                        FadeInUp(
+                          child: SoftCard(
+                            color: AppColors.blue,
+                            padding: const EdgeInsets.all(20),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _Summary(value: '${list.length}', label: tr('sessioni totali')),
+                                ),
+                                Expanded(
+                                  child: _Summary(value: formatDuration(total), label: tr('tempo allenato')),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        for (final h in list)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Dismissible(
-                              key: ValueKey(h.id),
-                              direction: DismissDirection.endToStart,
-                              confirmDismiss: (_) => confirm(context, title: tr('Eliminare la sessione?'), ok: tr('Elimina'), destructive: true),
-                              onDismissed: (_) async {
-                                try {
-                                  await ref.read(workoutRepositoryProvider).deleteHistory(h.id);
-                                } on ApiException catch (e) {
-                                  if (context.mounted) showMessage(context, e.message, error: true);
-                                }
-                                ref.invalidate(historyProvider);
-                              },
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 24),
-                                child: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-                              ),
-                              child: SoftCard(
-                                padding: const EdgeInsets.all(14),
-                                radius: AppRadius.md + 2,
-                                child: Row(
-                                  children: [
-                                    _DateBadge(date: h.startedAt),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(workouts[h.workoutId]?.name ?? tr('Allenamento'),
-                                              style: const TextStyle(fontWeight: FontWeight.w700)),
-                                          Text(
-                                            [formatTime(h.startedAt), formatDuration(h.duration), if (h.groupId != null) tr('di gruppo')]
-                                                .where((s) => s.isNotEmpty)
-                                                .join(' · '),
-                                            style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
-                                          ),
-                                          if (h.notes?.isNotEmpty == true)
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 4),
-                                              child: Text(h.notes!, style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                        for (final (i, h) in list.indexed)
+                          FadeInUp(
+                            index: i + 1,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Dismissible(
+                                key: ValueKey(h.id),
+                                direction: DismissDirection.endToStart,
+                                confirmDismiss: (_) => confirm(context, title: tr('Eliminare la sessione?'), ok: tr('Elimina'), destructive: true),
+                                onDismissed: (_) async {
+                                  try {
+                                    await ref.read(workoutRepositoryProvider).deleteHistory(h.id);
+                                  } on ApiException catch (e) {
+                                    if (context.mounted) showMessage(context, e.message, error: true);
+                                  }
+                                  ref.invalidate(historyProvider);
+                                },
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 24),
+                                  child: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+                                ),
+                                child: SoftCard(
+                                  padding: const EdgeInsets.all(14),
+                                  radius: AppRadius.md + 2,
+                                  child: Row(
+                                    children: [
+                                      _DateBadge(date: h.startedAt),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(workouts[h.workoutId]?.name ?? tr('Allenamento'),
+                                                style: const TextStyle(fontWeight: FontWeight.w700)),
+                                            Text(
+                                              [formatTime(h.startedAt), formatDuration(h.duration), if (h.groupId != null) tr('di gruppo')]
+                                                  .where((s) => s.isNotEmpty)
+                                                  .join(' · '),
+                                              style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
                                             ),
-                                        ],
+                                            if (h.notes?.isNotEmpty == true)
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 4),
+                                                child: Text(h.notes!, style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                                              ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.ios_share_rounded, color: AppColors.inkSoft),
-                                      tooltip: tr('Condividi'),
-                                      onPressed: () => shareSession(context, h,
-                                          workout: workouts[h.workoutId], username: me.username),
-                                    ),
-                                  ],
+                                      IconButton(
+                                        icon: Icon(Icons.ios_share_rounded, color: AppColors.inkSoft),
+                                        tooltip: tr('Condividi'),
+                                        onPressed: () => shareSession(context, h,
+                                            workout: workouts[h.workoutId], username: me.username),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

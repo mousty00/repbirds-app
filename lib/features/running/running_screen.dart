@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/backgrounds.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/ui.dart';
 import '../../data/providers.dart';
 import '../../models/running.dart';
@@ -133,7 +134,7 @@ class _MyRoutes extends ConsumerWidget {
               padding: _listPadding,
               itemCount: routes.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (_, i) => RouteCard(route: routes[i]),
+              itemBuilder: (_, i) => FadeInUp(index: i, child: RouteCard(route: routes[i])),
             ),
     );
   }
@@ -159,7 +160,7 @@ class _FriendsRoutes extends ConsumerWidget {
               padding: _listPadding,
               itemCount: routes.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (_, i) => RouteCard(route: routes[i], showAuthor: true),
+              itemBuilder: (_, i) => FadeInUp(index: i, child: RouteCard(route: routes[i], showAuthor: true)),
             ),
     );
   }

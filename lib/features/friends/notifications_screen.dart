@@ -6,6 +6,7 @@ import '../../core/l10n/l10n.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/ui.dart';
 import '../../data/notification_repository.dart';
 import '../../data/providers.dart';
@@ -76,17 +77,20 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     else ...[
                       if (r.isNotEmpty) ...[
                         SectionHeader(tr('Richieste di amicizia · {count}', {'count': r.length})),
-                        for (final f in r) Padding(padding: const EdgeInsets.only(bottom: 10), child: FriendRequestTile(request: f)),
+                        for (final (k, f) in r.indexed)
+                          FadeInUp(index: k, child: Padding(padding: const EdgeInsets.only(bottom: 10), child: FriendRequestTile(request: f))),
                         const SizedBox(height: 12),
                       ],
                       if (i.isNotEmpty) ...[
                         SectionHeader(tr('Inviti ai gruppi · {count}', {'count': i.length})),
-                        for (final m in i) Padding(padding: const EdgeInsets.only(bottom: 10), child: GroupInviteTile(member: m)),
+                        for (final (k, m) in i.indexed)
+                          FadeInUp(index: r.length + k, child: Padding(padding: const EdgeInsets.only(bottom: 10), child: GroupInviteTile(member: m))),
                         const SizedBox(height: 12),
                       ],
                       if (a.isNotEmpty) ...[
                         SectionHeader(tr('Attività')),
-                        for (final n in a) Padding(padding: const EdgeInsets.only(bottom: 10), child: ActivityTile(notification: n)),
+                        for (final (k, n) in a.indexed)
+                          FadeInUp(index: r.length + i.length + k, child: Padding(padding: const EdgeInsets.only(bottom: 10), child: ActivityTile(notification: n))),
                       ],
                     ],
                   ],
