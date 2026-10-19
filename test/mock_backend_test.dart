@@ -85,6 +85,19 @@ void main() {
     expect(MockBackend.uploads[p.image!.substring(MockBackend.uploadScheme.length)], [1, 2, 3]);
   });
 
+  test('segnalazione di un problema con screenshot in multipart', () async {
+    final res = await post('/bug-reports', FormData.fromMap({
+      'description': 'Il timer si blocca alla terza serie',
+      'images': [MultipartFile.fromBytes([1, 2, 3], filename: 'a.png')],
+    }));
+    expect(res['message'], 'Bug report received');
+
+    await expectLater(
+      post('/bug-reports', FormData.fromMap({'description': 'rotto'})),
+      throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 400)),
+    );
+  });
+
   test('notifiche: lista, badge, lettura e registrazione dispositivo', () async {
     final page = PageResult.fromJson(await get('/notifications') as Map<String, dynamic>, AppNotification.fromJson);
     expect(page.results, isNotEmpty);

@@ -36,6 +36,22 @@ class UserRepository {
   /// `type`: POST, COMMENT o USER. Le segnalazioni arrivano via mail al moderatore.
   Future<void> report({required String type, required String targetId, String? reason}) =>
       _api.post<dynamic>('/reports', data: {'type': type, 'targetId': targetId, 'reason': reason});
+
+  /// Problema dell'app (non di un contenuto), con fino a 5 screenshot. Arriva via mail al team.
+  Future<void> reportBug({
+    required String description,
+    String? device,
+    List<({List<int> bytes, String name})> images = const [],
+  }) async {
+    final form = FormData.fromMap({
+      'description': description,
+      'device': ?device,
+    });
+    for (final image in images) {
+      form.files.add(MapEntry('images', MultipartFile.fromBytes(image.bytes, filename: image.name)));
+    }
+    await _api.post<dynamic>('/bug-reports', data: form);
+  }
 }
 
 final userRepositoryProvider =

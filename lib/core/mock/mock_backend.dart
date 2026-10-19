@@ -895,15 +895,12 @@ class MockBackend extends Interceptor {
       _notifications.firstWhere((n) => n['id'] == id, orElse: () => throw _MockError(404, 'Notifica non trovata'))['read'] = true;
       return _ok('Notification marked as read');
     }
-    if (match('DELETE', '/notifications/:id')) {
-      final id = seg[1];
-      if (!_notifications.any((n) => n['id'] == id)) throw _MockError(404, 'Notifica non trovata');
-      _notifications.removeWhere((n) => n['id'] == id);
-      return _ok('Notification deleted');
-    }
-    if (match('DELETE', '/notifications')) {
-      _notifications.clear();
-      return _ok('Notifications deleted');
+    if (match('POST', '/bug-reports')) {
+      final form = o.data as FormData;
+      final description = form.fields.firstWhere((f) => f.key == 'description', orElse: () => const MapEntry('', '')).value;
+      if (description.trim().length < 10) throw _MockError(400, 'Describe the problem in 10 to 2000 characters');
+      if (form.files.where((f) => f.key == 'images').length > 5) throw _MockError(400, 'At most 5 images per report');
+      return _ok('Bug report received');
     }
     if (match('POST', '/devices')) {
       devices.add('${body['token']}');
