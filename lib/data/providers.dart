@@ -169,23 +169,27 @@ final activityProvider = FutureProvider<List<AppNotification>>((ref) async {
   return (await ref.watch(notificationRepositoryProvider).all()).results;
 });
 
-/// Attività non ancora lette; 0 se il backend non risponde.
-final unreadActivityProvider = FutureProvider<int>((ref) async {
-  ref.watch(userKeyProvider);
-  try {
-    return await ref.watch(notificationRepositoryProvider).unreadCount();
-  } catch (_) {
-    return 0;
+/// Notifiche non ancora lette; 0 se il backend non risponde. Lo stream in tempo
+/// reale (`NotificationStream`) lo aggiorna con [UnreadActivity.set].
+class UnreadActivity extends AsyncNotifier<int> {
+  @override
+  Future<int> build() async {
+    ref.watch(userKeyProvider);
+    try {
+      return await ref.watch(notificationRepositoryProvider).unreadCount();
+    } catch (_) {
+      return 0;
+    }
   }
-});
 
-/// Numero per il badge: richieste di amicizia + inviti ai gruppi + attività non lette.
-final notificationCountProvider = Provider<int>((ref) {
-  final requests = ref.watch(friendRequestsProvider).value?.length ?? 0;
-  final invites = ref.watch(groupInvitesProvider).value?.length ?? 0;
-  final unread = ref.watch(unreadActivityProvider).value ?? 0;
-  return requests + invites + unread;
-});
+  void set(int count) => state = AsyncData(count);
+}
+
+final unreadActivityProvider = AsyncNotifierProvider<UnreadActivity, int>(UnreadActivity.new);
+
+/// Numero sulla campanella: le notifiche non lette (richieste e inviti compresi,
+/// arrivano anche loro come notifica).
+final notificationCountProvider = Provider<int>((ref) => ref.watch(unreadActivityProvider).value ?? 0);
 
 /// Ricarica tutto quello che una nuova notifica può cambiare (es. all'arrivo di
 /// una push). Riceve `ref.invalidate` così va bene sia con `Ref` sia con `WidgetRef`.

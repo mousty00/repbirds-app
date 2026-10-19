@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,6 +26,10 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  /// Tolte dalla lista mentre il server le cancella (Dismissible vuole che
+  /// spariscano subito dall'albero).
+  final _removed = <String>{};
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +47,39 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
   }
 
+  Future<void> _delete(AppNotification n) async {
+    setState(() => _removed.add(n.id));
+    try {
+      await ref.read(notificationRepositoryProvider).delete(n.id);
+      ref.invalidate(activityProvider);
+      ref.invalidate(unreadActivityProvider);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _removed.remove(n.id));
+      showMessage(context, e.message, error: true);
+    }
+  }
+
+  Future<void> _deleteAll(List<AppNotification> all) async {
+    final ok = await confirm(context,
+        title: tr('Cancellare tutte le notifiche?'),
+        message: tr('Richieste di amicizia e inviti restano finché non rispondi.'),
+        ok: tr('Cancella tutte'),
+        destructive: true);
+    if (!ok || !mounted) return;
+    final ids = all.map((n) => n.id).toSet();
+    setState(() => _removed.addAll(ids));
+    try {
+      await ref.read(notificationRepositoryProvider).deleteAll();
+      ref.invalidate(activityProvider);
+      ref.invalidate(unreadActivityProvider);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _removed.removeAll(ids));
+      showMessage(context, e.message, error: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final requests = ref.watch(friendRequestsProvider);
@@ -51,7 +89,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final r = requests.value ?? const <Friendship>[];
     final i = invites.value ?? const <GroupMember>[];
     // richieste e inviti ancora aperti hanno già la loro riga con i bottoni
-    final a = (activity.value ?? const <AppNotification>[])
+    final all = (activity.value ?? const <AppNotification>[]).where((n) => !_removed.contains(n.id)).toList();
+    final a = all
         .where((n) => n.kind != NotificationKind.friendRequest && n.kind != NotificationKind.groupInvite)
         .toList();
 
@@ -59,7 +98,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            TopBar(title: tr('Notifiche')),
+            TopBar(
+              title: tr('Notifiche'),
+              actions: [
+                if (all.isNotEmpty)
+                  CircleIconButton(
+                    icon: Icons.delete_sweep_rounded,
+                    size: 44,
+                    tooltip: tr('Cancella tutte'),
+                    onTap: () => _deleteAll(all),
+                  ),
+              ],
+            ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
@@ -86,7 +136,26 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       ],
                       if (a.isNotEmpty) ...[
                         SectionHeader(tr('Attività')),
-                        for (final n in a) Padding(padding: const EdgeInsets.only(bottom: 10), child: ActivityTile(notification: n)),
+                        for (final n in a)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Dismissible(
+                              key: ValueKey(n.id),
+                              direction: DismissDirection.endToStart,
+                              onDismissed: (_) => _delete(n),
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 24),
+                                child: Icon(Icons.delete_outline_rounded,
+                                    color: AppColors.danger, semanticLabel: tr('Elimina')),
+                              ),
+                              // chi usa lo screen reader non può scorrere: stessa azione dal menu
+                              child: Semantics(
+                                customSemanticsActions: {CustomSemanticsAction(label: tr('Elimina')): () => _delete(n)},
+                                child: ActivityTile(notification: n),
+                              ),
+                            ),
+                          ),
                       ],
                     ],
                   ],
