@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../../features/running/geo.dart';
 import '../config/env.dart';
 
+part 'mock_body.dart';
 part 'mock_running.dart';
 
 /// Backend finto in memoria, attivo quando `Env.useMock` è vero
@@ -87,6 +88,7 @@ class MockBackend extends Interceptor {
   final _runRoutes = <Map<String, dynamic>>[];
   final _runEvents = <Map<String, dynamic>>[];
   final _runs = <Map<String, dynamic>>[];
+  final _bodyPhotos = <Map<String, dynamic>>[];
   final devices = <String>{};
 
   static String _iso(DateTime d) => d.toUtc().toIso8601String();
@@ -306,6 +308,7 @@ class MockBackend extends Interceptor {
       notification('FRIEND_ACCEPTED', giulia, 'f1', 48, read: true),
     ]);
     _seedRunning(giulia, marco, sara);
+    _seedBody(giulia);
     // una corsa di gruppo: sessione del gruppo su un percorso
     _sessions.add(_session(_groups.first, null, _now.add(const Duration(days: 2, hours: 1)), {'giulia.fit': 'going'},
         routeId: '${_runRoutes.first['id']}', meetingPoint: 'Ingresso del parco'));
@@ -910,6 +913,10 @@ class MockBackend extends Interceptor {
       devices.remove('${q['token']}');
       return _ok('Device unregistered');
     }
+
+    // Foto del fisico
+    final bodyPhotos = await _body(match, last, q, o, body);
+    if (!identical(bodyPhotos, _unhandled)) return bodyPhotos;
 
     // Corsa
     final running = _running(match, last, seg, body);

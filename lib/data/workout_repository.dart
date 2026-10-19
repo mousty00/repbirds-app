@@ -95,20 +95,24 @@ class WorkoutRepository {
     return PageResult.fromJson(res, WorkoutHistory.fromJson).results;
   }
 
-  Future<void> logSession({
+  /// Salva la sessione nello storico e ne restituisce l'id (per legarci la foto del fisico).
+  Future<String?> logSession({
     required String workoutId,
     String? groupId,
     required DateTime startedAt,
     required DateTime completedAt,
     String? notes,
-  }) =>
-      _api.post<dynamic>('/workout-history', data: {
-        'workoutId': workoutId,
-        'groupId': groupId,
-        'startedAt': startedAt.toUtc().toIso8601String(),
-        'completedAt': completedAt.toUtc().toIso8601String(),
-        'notes': notes,
-      });
+  }) async {
+    final res = await _api.post<dynamic>('/workout-history', data: {
+      'workoutId': workoutId,
+      'groupId': groupId,
+      'startedAt': startedAt.toUtc().toIso8601String(),
+      'completedAt': completedAt.toUtc().toIso8601String(),
+      'notes': notes,
+    });
+    final result = res is Map ? res['result'] : null;
+    return result is Map ? result['id']?.toString() : null;
+  }
 
   Future<void> deleteHistory(String id) => _api.delete<dynamic>('/workout-history/delete/$id');
 }

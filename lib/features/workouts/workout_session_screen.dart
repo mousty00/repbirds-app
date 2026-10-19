@@ -18,6 +18,7 @@ import '../../core/widgets/ui.dart';
 import '../../data/providers.dart';
 import '../../data/workout_repository.dart';
 import '../../models/workout.dart';
+import '../body/body_photo_prompt.dart';
 import 'saved_session.dart';
 import 'session_progress.dart';
 
@@ -189,7 +190,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
     if (!ok) return;
     setState(() => _saving = true);
     try {
-      await ref.read(workoutRepositoryProvider).logSession(
+      final historyId = await ref.read(workoutRepositoryProvider).logSession(
             workoutId: w.id,
             groupId: widget.groupId,
             startedAt: _startedAt,
@@ -202,6 +203,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
       Sounds.play(Sound.finish);
       if (!mounted) return;
       showMessage(context, tr('Allenamento salvato. Grande! 💪'));
+      final photo = await showBodyPhotoPrompt(context, workoutHistoryId: historyId);
+      if (!mounted) return;
+      if (photo) showMessage(context, tr('Foto salvata nel calendario'));
       context.pop();
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);
