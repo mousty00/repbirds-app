@@ -150,6 +150,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         },
                       ),
                       _MenuRow(
+                        icon: Icons.help_outline_rounded,
+                        color: AppColors.mint,
+                        label: tr('Aiuto'),
+                        onTap: () => go(() => context.push('/help')),
+                      ),
+                      _MenuRow(
                         icon: Icons.bug_report_outlined,
                         color: AppColors.danger,
                         label: tr('Segnala un problema'),

@@ -38,6 +38,7 @@ import '../../features/workouts/workout_detail_screen.dart';
 import '../../features/workouts/workout_form_screen.dart';
 import '../../features/workouts/workout_session_screen.dart';
 import '../../features/support/bug_report_screen.dart';
+import '../../models/body_photo.dart';
 import '../../models/workout.dart';
 import '../widgets/ui.dart';
 

@@ -898,6 +898,16 @@ class MockBackend extends Interceptor {
       _notifications.firstWhere((n) => n['id'] == id, orElse: () => throw _MockError(404, 'Notifica non trovata'))['read'] = true;
       return _ok('Notification marked as read');
     }
+    if (match('DELETE', '/notifications/:id')) {
+      final id = seg[1];
+      if (!_notifications.any((n) => n['id'] == id)) throw _MockError(404, 'Notifica non trovata');
+      _notifications.removeWhere((n) => n['id'] == id);
+      return _ok('Notification deleted');
+    }
+    if (match('DELETE', '/notifications')) {
+      _notifications.clear();
+      return _ok('Notifications deleted');
+    }
     if (match('POST', '/bug-reports')) {
       final form = o.data as FormData;
       final description = form.fields.firstWhere((f) => f.key == 'description', orElse: () => const MapEntry('', '')).value;
