@@ -36,6 +36,7 @@ import '../../features/workouts/workouts_screen.dart';
 import '../../features/workouts/workout_detail_screen.dart';
 import '../../features/workouts/workout_form_screen.dart';
 import '../../features/workouts/workout_session_screen.dart';
+import '../../features/support/bug_report_screen.dart';
 import '../../models/workout.dart';
 import '../widgets/ui.dart';
 
@@ -180,6 +181,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         path: '/profile/edit',
         builder: (_, _) => const ContentWidth(child: EditProfileScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/support/report',
+        builder: (_, _) => const ContentWidth(child: BugReportScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
