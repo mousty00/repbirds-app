@@ -35,6 +35,7 @@ import '../../features/workouts/workout_detail_screen.dart';
 import '../../features/workouts/workout_form_screen.dart';
 import '../../features/workouts/workout_session_screen.dart';
 import '../../models/workout.dart';
+import '../widgets/ui.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
 
@@ -81,28 +82,32 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       return null;
     },
+    // ContentWidth: su un pieghevole aperto o un tablet la pagina resta una colonna al centro.
+    // Le mappe della corsa e le tab con TwoPane (Allenati, Insieme) usano tutto lo schermo.
     routes: [
       GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
-      GoRoute(path: '/welcome', builder: (_, _) => const WelcomeScreen()),
-      GoRoute(path: '/auth/login', builder: (_, _) => const LoginScreen()),
-      GoRoute(path: '/auth/signup', builder: (_, _) => const SignupScreen()),
+      GoRoute(path: '/welcome', builder: (_, _) => const ContentWidth(child: WelcomeScreen())),
+      GoRoute(path: '/auth/login', builder: (_, _) => const ContentWidth(child: LoginScreen())),
+      GoRoute(path: '/auth/signup', builder: (_, _) => const ContentWidth(child: SignupScreen())),
       GoRoute(
         path: '/auth/verify',
-        builder: (_, s) => VerifyOtpScreen(
-          username: s.uri.queryParameters['username'] ?? '',
-          email: s.uri.queryParameters['email'],
+        builder: (_, s) => ContentWidth(
+          child: VerifyOtpScreen(
+            username: s.uri.queryParameters['username'] ?? '',
+            email: s.uri.queryParameters['email'],
+          ),
         ),
       ),
-      GoRoute(path: '/auth/forgot', builder: (_, _) => const ForgotPasswordScreen()),
+      GoRoute(path: '/auth/forgot', builder: (_, _) => const ContentWidth(child: ForgotPasswordScreen())),
 
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell: shell),
         branches: [
-          StatefulShellBranch(routes: [GoRoute(path: '/home', builder: (_, _) => const HomeScreen())]),
+          StatefulShellBranch(routes: [GoRoute(path: '/home', builder: (_, _) => const ContentWidth(child: HomeScreen()))]),
           StatefulShellBranch(routes: [GoRoute(path: '/workouts', builder: (_, _) => const BackToHome(child: WorkoutsScreen()))]),
           StatefulShellBranch(routes: [GoRoute(path: '/together', builder: (_, _) => const BackToHome(child: TogetherScreen()))]),
           StatefulShellBranch(routes: [
-            GoRoute(path: '/profile', builder: (_, _) => const BackToHome(child: ProfileScreen())),
+            GoRoute(path: '/profile', builder: (_, _) => const ContentWidth(child: BackToHome(child: ProfileScreen()))),
           ]),
         ],
       ),
@@ -115,7 +120,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/search',
-        builder: (_, _) => const SearchScreen(),
+        builder: (_, _) => const ContentWidth(child: SearchScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
@@ -125,71 +130,75 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/posts/new',
-        builder: (_, s) => CreatePostScreen(draft: s.extra as PostDraft?),
+        builder: (_, s) => ContentWidth(child: CreatePostScreen(draft: s.extra as PostDraft?)),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/posts/:id',
-        builder: (_, s) => PostDetailScreen(postId: s.pathParameters['id']!),
+        builder: (_, s) => ContentWidth(child: PostDetailScreen(postId: s.pathParameters['id']!)),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/workout/new',
-        builder: (_, _) => const WorkoutFormScreen(),
+        builder: (_, _) => const ContentWidth(child: WorkoutFormScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/workout/:id',
-        builder: (_, s) => WorkoutDetailScreen(workoutId: s.pathParameters['id']!),
+        builder: (_, s) => ContentWidth(child: WorkoutDetailScreen(workoutId: s.pathParameters['id']!)),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/workout/:id/edit',
-        builder: (_, s) => WorkoutEditScreen(workoutId: s.pathParameters['id']!, initial: s.extra as Workout?),
+        builder: (_, s) => ContentWidth(child: WorkoutEditScreen(workoutId: s.pathParameters['id']!, initial: s.extra as Workout?)),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/workout/:id/session',
-        builder: (_, s) => WorkoutSessionScreen(
-          workoutId: s.pathParameters['id']!,
-          groupId: s.uri.queryParameters['group'],
-          // sessione di gruppo avviata dall'organizzatore: tutti contano dallo stesso istante
-          startedAt: DateTime.tryParse(s.uri.queryParameters['start'] ?? ''),
+        builder: (_, s) => ContentWidth(
+          child: WorkoutSessionScreen(
+            workoutId: s.pathParameters['id']!,
+            groupId: s.uri.queryParameters['group'],
+            // sessione di gruppo avviata dall'organizzatore: tutti contano dallo stesso istante
+            startedAt: DateTime.tryParse(s.uri.queryParameters['start'] ?? ''),
+          ),
         ),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/profile/edit',
-        builder: (_, _) => const EditProfileScreen(),
+        builder: (_, _) => const ContentWidth(child: EditProfileScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/history',
-        builder: (_, _) => const HistoryScreen(),
+        builder: (_, _) => const ContentWidth(child: HistoryScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/group/new',
-        builder: (_, s) => GroupFormScreen(workoutId: s.uri.queryParameters['workout']),
+        builder: (_, s) => ContentWidth(child: GroupFormScreen(workoutId: s.uri.queryParameters['workout'])),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/group/:id',
-        builder: (_, s) => GroupDetailScreen(groupId: s.pathParameters['id']!),
+        builder: (_, s) => ContentWidth(child: GroupDetailScreen(groupId: s.pathParameters['id']!)),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/group/:id/session/new',
-        builder: (_, s) => GroupFormScreen(
-          groupId: s.pathParameters['id'],
-          workoutId: s.uri.queryParameters['workout'],
-          routeId: s.uri.queryParameters['route'],
+        builder: (_, s) => ContentWidth(
+          child: GroupFormScreen(
+            groupId: s.pathParameters['id'],
+            workoutId: s.uri.queryParameters['workout'],
+            routeId: s.uri.queryParameters['route'],
+          ),
         ),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/group-session/:id',
-        builder: (_, s) => GroupSessionScreen(sessionId: s.pathParameters['id']!),
+        builder: (_, s) => ContentWidth(child: GroupSessionScreen(sessionId: s.pathParameters['id']!)),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
@@ -232,17 +241,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/friends',
-        builder: (_, _) => const FriendsScreen(),
+        builder: (_, _) => const ContentWidth(child: FriendsScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/notifications',
-        builder: (_, _) => const NotificationsScreen(),
+        builder: (_, _) => const ContentWidth(child: NotificationsScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/u/:username',
-        builder: (_, s) => UserProfileScreen(username: s.pathParameters['username']!),
+        builder: (_, s) => ContentWidth(child: UserProfileScreen(username: s.pathParameters['username']!)),
       ),
       // Link condivisi fuori dall'app (https://repbirds.com/w/<id>, vedi ShareLinks).
       GoRoute(path: '/w/:id', redirect: (_, s) => '/workout/${s.pathParameters['id']}'),

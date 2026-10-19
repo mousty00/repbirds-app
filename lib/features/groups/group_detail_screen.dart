@@ -57,7 +57,7 @@ class GroupDetailScreen extends ConsumerWidget {
       await ref.read(groupRepositoryProvider).removeMember(m.id);
       if (self) {
         ref.invalidate(groupsProvider);
-        if (context.mounted) context.pop();
+        if (context.mounted) closePage(context);
       } else {
         _refresh(ref);
       }
@@ -71,7 +71,7 @@ class GroupDetailScreen extends ConsumerWidget {
     try {
       await ref.read(groupRepositoryProvider).delete(groupId);
       ref.invalidate(groupsProvider);
-      if (context.mounted) context.pop();
+      if (context.mounted) closePage(context);
     } on ApiException catch (e) {
       if (context.mounted) showMessage(context, e.message, error: true);
     }

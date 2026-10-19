@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -245,6 +246,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
   @override
   Widget build(BuildContext context) {
     final workout = ref.watch(workoutProvider(widget.workoutId));
+    // Pieghevole mezzo aperto e appoggiato: la serie o il recupero sopra la piega,
+    // da leggere da lontano; tutti i comandi sotto, sulla parte appoggiata.
+    final fold = tabletopFold(context);
+    final top = MediaQuery.paddingOf(context).top + 4;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -260,61 +265,67 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
               if (!_resumeChecked) return const SkeletonDetail();
               final p = _progress ??= SessionProgress(w.exercises)..restore(_resume?.done ?? const {}, _resume?.focus ?? 0);
               final resting = _restEndsAt != null;
+              final bar = Row(
+                children: [
+                  CircleIconButton(icon: Icons.close_rounded, size: 44, tooltip: tr('Esci'), onTap: _leave),
+                  Expanded(
+                    child: resting
+                        ? const SizedBox.shrink()
+                        : Text(
+                            formatClock(_elapsed),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()]),
+                          ),
+                  ),
+                  CircleIconButton(
+                    icon: Icons.checklist_rounded,
+                    size: 44,
+                    tooltip: tr('Esercizi della scheda'),
+                    onTap: () => _showList(w, p),
+                  ),
+                ],
+              );
+              final card = resting
+                  ? _RestCard(left: _restLeft, total: _restTotal, elapsed: _elapsed)
+                  : p.allDone
+                      ? _DoneCard(progress: p)
+                      : _SetCard(progress: p);
+              final Widget actions = resting
+                  ? Row(
+                      children: [
+                        Expanded(child: _SoftButton(label: tr('Annulla serie'), onTap: () => _undoLast(p))),
+                        const SizedBox(width: 10),
+                        Expanded(child: _SoftButton(label: tr('+15 s'), onTap: () => _addRest(15))),
+                        const SizedBox(width: 10),
+                        Expanded(child: _SoftButton(label: tr('Salta'), onTap: _skipRest)),
+                      ],
+                    )
+                  : p.allDone
+                      ? PrimaryButton(label: tr('Termina e salva'), icon: Icons.check_rounded, loading: _saving, onPressed: () => _finish(w))
+                      : PrimaryButton(
+                          label: tr('Serie fatta'),
+                          icon: Icons.check_rounded,
+                          color: AppColors.mint,
+                          onPressed: () => _completeSet(p),
+                        );
               return Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        CircleIconButton(icon: Icons.close_rounded, size: 44, tooltip: tr('Esci'), onTap: _leave),
-                        Expanded(
-                          child: resting
-                              ? const SizedBox.shrink()
-                              : Text(
-                                  formatClock(_elapsed),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()]),
-                                ),
-                        ),
-                        CircleIconButton(
-                          icon: Icons.checklist_rounded,
-                          size: 44,
-                          tooltip: tr('Esercizi della scheda'),
-                          onTap: () => _showList(w, p),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: resting
-                          ? _RestCard(left: _restLeft, total: _restTotal, elapsed: _elapsed)
-                          : p.allDone
-                              ? _DoneCard(progress: p)
-                              : _SetCard(progress: p),
-                    ),
-                    const SizedBox(height: 12),
-                    if (resting)
-                      Row(
-                        children: [
-                          Expanded(child: _SoftButton(label: tr('Annulla serie'), onTap: () => _undoLast(p))),
-                          const SizedBox(width: 10),
-                          Expanded(child: _SoftButton(label: tr('+15 s'), onTap: () => _addRest(15))),
-                          const SizedBox(width: 10),
-                          Expanded(child: _SoftButton(label: tr('Salta'), onTap: _skipRest)),
-                        ],
+                child: fold == null
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [bar, const SizedBox(height: 12), Expanded(child: card), const SizedBox(height: 12), actions],
                       )
-                    else if (p.allDone)
-                      PrimaryButton(label: tr('Termina e salva'), icon: Icons.check_rounded, loading: _saving, onPressed: () => _finish(w))
-                    else
-                      PrimaryButton(
-                        label: tr('Serie fatta'),
-                        icon: Icons.check_rounded,
-                        color: AppColors.mint,
-                        onPressed: () => _completeSet(p),
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(height: math.max(0, fold.top - top - 12), child: card),
+                          SizedBox(height: fold.height + 24),
+                          bar,
+                          const Spacer(),
+                          actions,
+                          const Spacer(),
+                        ],
                       ),
-                  ],
-                ),
               );
             },
           ),

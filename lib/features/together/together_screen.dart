@@ -11,10 +11,13 @@ import '../../data/providers.dart';
 import '../../models/group.dart';
 import '../../models/social.dart';
 import '../feed/post_card.dart';
+import '../feed/post_detail_screen.dart';
+import '../groups/group_detail_screen.dart';
 import '../shell/app_shell.dart';
 
 /// Tab Insieme, divisa in due: i tuoi gruppi (con ricerca) e il feed degli
-/// amici. Inviti e sessioni in programma stanno in Oggi.
+/// amici. Inviti e sessioni in programma stanno in Oggi. Su un pieghevole
+/// aperto gruppo o post si aprono accanto alla lista (vedi [TwoPane]).
 class TogetherScreen extends ConsumerStatefulWidget {
   const TogetherScreen({super.key});
 
@@ -25,6 +28,12 @@ class TogetherScreen extends ConsumerStatefulWidget {
 class _TogetherScreenState extends ConsumerState<TogetherScreen> {
   int _tab = 0;
   String _q = '';
+
+  /// Il gruppo o il post aperto nel pannello accanto alla lista.
+  Widget? _open;
+
+  /// Nel pannello se c'è posto, altrimenti a tutto schermo come sempre.
+  VoidCallback? _opener(Widget page) => TwoPane.active(context) ? () => setState(() => _open = page) : null;
   final _search = TextEditingController();
 
   @override
@@ -43,6 +52,16 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final open = _open;
+    return TwoPane(
+      start: _list(context),
+      end: open == null
+          ? Center(child: EmptyState(icon: Icons.groups_rounded, title: tr('Scegli un gruppo o un post')))
+          : PaneScope(onClose: () => setState(() => _open = null), child: open),
+    );
+  }
+
+  Widget _list(BuildContext context) {
     final groups = _tab == 0;
     return Scaffold(
       body: SafeArea(
@@ -113,7 +132,10 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
       const SizedBox(height: 14),
       if (shown.isEmpty) EmptyState(icon: Icons.search_off_rounded, title: tr('Nessun risultato')),
       for (final g in shown)
-        Padding(padding: const EdgeInsets.only(bottom: 10), child: _GroupRow(group: g)),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _GroupRow(group: g, onTap: _opener(GroupDetailScreen(key: ValueKey(g.id), groupId: g.id))),
+        ),
     ];
   }
 
@@ -131,16 +153,21 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
               )
             : Column(
                 children: [
-                  for (final p in list) Padding(padding: const EdgeInsets.only(bottom: 14), child: PostCard(post: p)),
+                  for (final p in list)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: PostCard(post: p, onOpen: _opener(PostDetailScreen(key: ValueKey(p.id), postId: p.id))),
+                    ),
                 ],
               ),
       );
 }
 
 class _GroupRow extends StatelessWidget {
-  const _GroupRow({required this.group});
+  const _GroupRow({required this.group, this.onTap});
 
   final WorkoutGroup group;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +175,7 @@ class _GroupRow extends StatelessWidget {
     return SoftCard(
       padding: const EdgeInsets.all(14),
       radius: AppRadius.md + 2,
-      onTap: () => context.push('/group/${group.id}'),
+      onTap: onTap ?? () => context.push('/group/${group.id}'),
       child: Row(
         children: [
           const IconChip(icon: Icons.groups_rounded, color: AppColors.lilac),

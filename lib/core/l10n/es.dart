@@ -619,6 +619,7 @@ const es = <String, String>{
   'Cerca': 'Buscar',
   'Gruppi, amici o username': 'Grupos, amigos o usuario',
   'Trova i tuoi gruppi, i tuoi amici o nuove persone da aggiungere.': 'Encuentra tus grupos, tus amigos o gente nueva para añadir.',
+  'Scegli un gruppo o un post': 'Elige un grupo o una publicación',
   'Nessun risultato': 'Sin resultados',
   'Altre persone': 'Otras personas',
   'Prima crea un gruppo: le corse di gruppo sono sessioni dei tuoi gruppi.': 'Primero crea un grupo: las carreras de grupo son sesiones de tus grupos.',

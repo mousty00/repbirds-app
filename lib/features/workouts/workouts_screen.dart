@@ -11,13 +11,25 @@ import '../../models/workout.dart';
 import '../auth/session.dart';
 import '../shell/app_shell.dart';
 import '../../core/widgets/skeleton.dart';
+import 'workout_detail_screen.dart';
 
 /// Tab Allenati: le tue schede e la Corsa. Con [explore] invece le schede
-/// pubbliche degli altri, da cui partire per una nuova.
-class WorkoutsScreen extends ConsumerWidget {
+/// pubbliche degli altri, da cui partire per una nuova. Su un pieghevole aperto
+/// la scheda scelta si apre accanto alla lista (vedi [TwoPane]).
+class WorkoutsScreen extends ConsumerStatefulWidget {
   const WorkoutsScreen({super.key, this.explore = false});
 
   final bool explore;
+
+  @override
+  ConsumerState<WorkoutsScreen> createState() => _WorkoutsScreenState();
+}
+
+class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
+  /// La scheda aperta nel pannello accanto alla lista.
+  String? _open;
+
+  bool get explore => widget.explore;
 
   void _create(BuildContext context) {
     showModalBottomSheet<void>(
@@ -70,7 +82,25 @@ class WorkoutsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final open = _open;
+    return TwoPane(
+      start: _list(context),
+      end: open == null
+          ? Center(
+              child: EmptyState(
+                icon: Icons.assignment_rounded,
+                title: tr('Scegli una scheda'),
+              ),
+            )
+          : PaneScope(
+              onClose: () => setState(() => _open = null),
+              child: WorkoutDetailScreen(key: ValueKey(open), workoutId: open),
+            ),
+    );
+  }
+
+  Widget _list(BuildContext context) {
     final me = ref.watch(currentUserProvider);
     final provider = explore ? exploreWorkoutsProvider : myWorkoutsProvider;
     final workouts = ref.watch(provider);
@@ -130,7 +160,12 @@ class WorkoutsScreen extends ConsumerWidget {
                     sliver: SliverList.separated(
                       itemCount: shown.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) => WorkoutCard(workout: shown[i], index: i, showOwner: explore),
+                      itemBuilder: (_, i) => WorkoutCard(
+                        workout: shown[i],
+                        index: i,
+                        showOwner: explore,
+                        onTap: TwoPane.active(context) ? () => setState(() => _open = shown[i].id) : null,
+                      ),
                     ),
                   );
                 },
@@ -179,11 +214,14 @@ class _RunCard extends StatelessWidget {
 
 /// Card scheda con colore pastello a rotazione.
 class WorkoutCard extends StatelessWidget {
-  const WorkoutCard({super.key, required this.workout, this.index = 0, this.showOwner = false});
+  const WorkoutCard({super.key, required this.workout, this.index = 0, this.showOwner = false, this.onTap});
 
   final Workout workout;
   final int index;
   final bool showOwner;
+
+  /// Di default apre la scheda a tutto schermo.
+  final VoidCallback? onTap;
 
   static const _accents = [AppColors.blue, AppColors.lilac, AppColors.pink, AppColors.mint];
 
@@ -192,7 +230,7 @@ class WorkoutCard extends StatelessWidget {
     final accent = _accents[index % _accents.length];
     final totalSets = workout.exercises.fold<int>(0, (a, e) => a + e.sets);
     return SoftCard(
-      onTap: () => context.push('/workout/${workout.id}'),
+      onTap: onTap ?? () => context.push('/workout/${workout.id}'),
       child: Row(
         children: [
           Container(

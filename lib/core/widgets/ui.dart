@@ -1,3 +1,5 @@
+import 'dart:ui' show DisplayFeatureState, DisplayFeatureType;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -518,7 +520,7 @@ class TopBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       child: Row(
         children: [
-          if (showBack && titleWidget == null) ...[
+          if (showBack && titleWidget == null && !PaneScope.inPane(context)) ...[
             CircleIconButton(
               icon: Icons.arrow_back_rounded,
               size: 44,
@@ -639,5 +641,96 @@ class SegmentedPill extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// --- Schermi larghi e pieghevoli (Galaxy Z Fold/Flip, Pixel Fold, tablet) ---
+
+/// Su uno schermo largo il contenuto resta una colonna leggibile al centro,
+/// invece di stirarsi da bordo a bordo.
+class ContentWidth extends StatelessWidget {
+  const ContentWidth({super.key, required this.child});
+
+  static const maxWidth = 640.0;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: Center(
+          child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: maxWidth), child: child),
+        ),
+      );
+}
+
+/// La piega orizzontale di un pieghevole aperto a metà e appoggiato (modalità
+/// tavolino / Flex Mode), in coordinate dello schermo. Null se il telefono non è
+/// in quella posizione, e sempre su iOS, che non la comunica alle app.
+Rect? tabletopFold(BuildContext context) {
+  for (final f in MediaQuery.displayFeaturesOf(context)) {
+    if (f.state == DisplayFeatureState.postureHalfOpened && f.bounds.width > f.bounds.height) return f.bounds;
+  }
+  return null;
+}
+
+/// Lista e dettaglio affiancati quando lo schermo lo permette: un pieghevole
+/// aperto a libro (si divide sulla piega, niente sotto la cerniera) o una
+/// finestra da almeno 840dp. Altrimenti solo [start], come su un telefono.
+class TwoPane extends StatelessWidget {
+  const TwoPane({super.key, required this.start, required this.end});
+
+  final Widget start;
+  final Widget end;
+
+  static Rect? _verticalFold(BuildContext context) {
+    for (final f in MediaQuery.displayFeaturesOf(context)) {
+      if (f.type != DisplayFeatureType.cutout && f.bounds.height > f.bounds.width) return f.bounds;
+    }
+    return null;
+  }
+
+  /// Se vero, aprire un elemento della lista lo mostra in [end] invece di aprire una pagina.
+  static bool active(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    return width >= 840 || (width >= 600 && _verticalFold(context) != null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!active(context)) return ContentWidth(child: start);
+    final fold = _verticalFold(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ponytail: si assume che il pannello parta dal bordo sinistro dello schermo (è il corpo di una tab)
+        SizedBox(width: fold?.left ?? MediaQuery.sizeOf(context).width * 0.4, child: start),
+        SizedBox(width: fold?.width ?? 0),
+        Expanded(child: end),
+      ],
+    );
+  }
+}
+
+/// Una pagina mostrata come pannello di [TwoPane] invece che a tutto schermo:
+/// niente "indietro", e chiuderla (es. dopo averla eliminata) svuota il pannello.
+class PaneScope extends InheritedWidget {
+  const PaneScope({super.key, required this.onClose, required super.child});
+
+  final VoidCallback onClose;
+
+  static bool inPane(BuildContext context) => context.getInheritedWidgetOfExactType<PaneScope>() != null;
+
+  @override
+  bool updateShouldNotify(PaneScope oldWidget) => false;
+}
+
+/// Chiude la pagina corrente: un pop se c'è dove tornare, o svuota il pannello di [TwoPane].
+void closePage(BuildContext context) {
+  final pane = context.getInheritedWidgetOfExactType<PaneScope>();
+  if (pane != null) {
+    pane.onClose();
+  } else if (context.canPop()) {
+    context.pop();
   }
 }

@@ -104,7 +104,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       await ref.read(postRepositoryProvider).delete(post.id);
       refreshPosts(ref);
       ref.invalidate(userPostsProvider(post.user.username));
-      if (mounted) context.pop();
+      if (mounted) closePage(context);
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);
     }
@@ -146,7 +146,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                     type: 'POST',
                     targetId: post.value!.id,
                     username: post.value!.user.username,
-                    onBlocked: () => context.canPop() ? context.pop() : null,
+                    onBlocked: () => closePage(context),
                   ),
               ],
             ),

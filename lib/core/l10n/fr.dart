@@ -619,6 +619,7 @@ const fr = <String, String>{
   'Cerca': 'Rechercher',
   'Gruppi, amici o username': 'Groupes, amis ou pseudo',
   'Trova i tuoi gruppi, i tuoi amici o nuove persone da aggiungere.': 'Trouve tes groupes, tes amis ou de nouvelles personnes à ajouter.',
+  'Scegli un gruppo o un post': 'Choisis un groupe ou une publication',
   'Nessun risultato': 'Aucun résultat',
   'Altre persone': 'Autres personnes',
   'Prima crea un gruppo: le corse di gruppo sono sessioni dei tuoi gruppi.': 'Crée d\'abord un groupe : les courses de groupe sont des séances de tes groupes.',

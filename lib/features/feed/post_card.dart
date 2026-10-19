@@ -14,10 +14,13 @@ import '../auth/session.dart';
 
 /// Post nel feed: autore, foto, testo, like e commenti.
 class PostCard extends ConsumerStatefulWidget {
-  const PostCard({super.key, required this.post, this.openOnTap = true, this.onChanged});
+  const PostCard({super.key, required this.post, this.openOnTap = true, this.onChanged, this.onOpen});
 
   final Post post;
   final bool openOnTap;
+
+  /// Di default apre il post a tutto schermo.
+  final VoidCallback? onOpen;
   final ValueChanged<Post>? onChanged;
 
   @override
@@ -27,6 +30,8 @@ class PostCard extends ConsumerStatefulWidget {
 class _PostCardState extends ConsumerState<PostCard> {
   late Post _post = widget.post;
   bool _busy = false;
+
+  void _open() => widget.onOpen != null ? widget.onOpen!() : context.push('/posts/${_post.id}');
 
   @override
   void didUpdateWidget(covariant PostCard old) {
@@ -96,7 +101,7 @@ class _PostCardState extends ConsumerState<PostCard> {
 
     return SoftCard(
       padding: const EdgeInsets.all(12),
-      onTap: widget.openOnTap ? () => context.push('/posts/${_post.id}') : null,
+      onTap: widget.openOnTap ? _open : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -155,7 +160,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                   icon: Icons.chat_bubble_outline_rounded,
                   color: AppColors.inkSoft,
                   label: '${_post.numComments}',
-                  onTap: () => context.push('/posts/${_post.id}'),
+                  onTap: _open,
                 ),
               ],
             ),

@@ -619,6 +619,7 @@ const en = <String, String>{
   'Cerca': 'Search',
   'Gruppi, amici o username': 'Groups, friends or username',
   'Trova i tuoi gruppi, i tuoi amici o nuove persone da aggiungere.': 'Find your groups, your friends or new people to add.',
+  'Scegli un gruppo o un post': 'Pick a group or a post',
   'Nessun risultato': 'No results',
   'Altre persone': 'Other people',
   'Prima crea un gruppo: le corse di gruppo sono sessioni dei tuoi gruppi.': 'Create a group first: group runs are sessions of your groups.',

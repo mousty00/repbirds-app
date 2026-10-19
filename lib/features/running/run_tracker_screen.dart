@@ -199,6 +199,9 @@ class _RunTrackerScreenState extends ConsumerState<RunTrackerScreen> {
     final now = DateTime.now();
     final active = _phase == _Phase.running || _phase == _Phase.paused || _phase == _Phase.saving;
     final route = _route?.points ?? const <LatLng>[];
+    // Pieghevole mezzo aperto e appoggiato: la mappa sopra la piega, tempo e comandi sotto.
+    final fold = tabletopFold(context);
+    final screenHeight = MediaQuery.sizeOf(context).height;
     return PopScope(
       canPop: !active,
       onPopInvokedWithResult: (didPop, _) async {
@@ -211,31 +214,37 @@ class _RunTrackerScreenState extends ConsumerState<RunTrackerScreen> {
       child: Scaffold(
         body: Stack(
           children: [
-            FlutterMap(
-              mapController: _map,
-              options: MapOptions(
-                initialCenter: route.firstOrNull ?? _position ?? const LatLng(41.9028, 12.4964),
-                initialZoom: 15,
-                initialCameraFit: route.length > 1
-                    ? CameraFit.bounds(bounds: LatLngBounds.fromPoints(route), padding: const EdgeInsets.fromLTRB(40, 120, 40, 320))
-                    : null,
-                onPositionChanged: (_, hasGesture) {
-                  if (hasGesture && _follow) setState(() => _follow = false);
-                },
-                interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+            Positioned.fill(
+              bottom: fold == null ? 0 : screenHeight - fold.top,
+              child: FlutterMap(
+                mapController: _map,
+                options: MapOptions(
+                  initialCenter: route.firstOrNull ?? _position ?? const LatLng(41.9028, 12.4964),
+                  initialZoom: 15,
+                  initialCameraFit: route.length > 1
+                      ? CameraFit.bounds(
+                          bounds: LatLngBounds.fromPoints(route),
+                          padding: fold == null ? const EdgeInsets.fromLTRB(40, 120, 40, 320) : const EdgeInsets.fromLTRB(40, 80, 40, 24),
+                        )
+                      : null,
+                  onPositionChanged: (_, hasGesture) {
+                    if (hasGesture && _follow) setState(() => _follow = false);
+                  },
+                  interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+                ),
+                children: [
+                  ...baseMapLayers(),
+                  PolylineLayer(polylines: [
+                    if (route.length > 1) routeLine(route),
+                    if (_recorder.points.length > 1) trackLine(_recorder.points),
+                  ]),
+                  MarkerLayer(markers: [
+                    ...startEndMarkers(route),
+                    if (_position != null) pointMarker(_position!, color: AppColors.blue, size: 24),
+                  ]),
+                  mapAttribution(top: true),
+                ],
               ),
-              children: [
-                ...baseMapLayers(),
-                PolylineLayer(polylines: [
-                  if (route.length > 1) routeLine(route),
-                  if (_recorder.points.length > 1) trackLine(_recorder.points),
-                ]),
-                MarkerLayer(markers: [
-                  ...startEndMarkers(route),
-                  if (_position != null) pointMarker(_position!, color: AppColors.blue, size: 24),
-                ]),
-                mapAttribution(top: true),
-              ],
             ),
             SafeArea(
               child: Padding(
@@ -285,71 +294,75 @@ class _RunTrackerScreenState extends ConsumerState<RunTrackerScreen> {
                 ),
               ),
             ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SoftCard(
-                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          formatSeconds(_phase == _Phase.ready || _phase == _Phase.loading ? 0 : _recorder.movingTime(now).inSeconds),
-                          style: Theme.of(context).textTheme.displayMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
-                        ),
-                        if (_phase == _Phase.paused)
-                          Text(tr('In pausa'), style: const TextStyle(color: AppColors.amber, fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            _Live(label: tr('Distanza'), value: formatDistance(_recorder.distance)),
-                            _Live(label: tr('Passo'), value: formatPace(_recorder.currentPace())),
-                            _Live(label: tr('Medio'), value: formatPace(_recorder.averagePace(now))),
-                          ],
-                        ),
-                        if (route.length > 1) ...[
-                          const SizedBox(height: 10),
-                          LinearProgressIndicator(
-                            value: (_recorder.distance / (_route!.distanceM == 0 ? 1 : _route!.distanceM)).clamp(0.0, 1.0),
-                            minHeight: 6,
-                            borderRadius: BorderRadius.circular(6),
-                            backgroundColor: AppColors.stroke,
-                            color: AppColors.blue,
+            Positioned.fill(
+              top: fold?.bottom ?? 0,
+              child: Align(
+                alignment: fold == null ? Alignment.bottomCenter : Alignment.center,
+                child: SafeArea(
+                  top: fold == null,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SoftCard(
+                      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            formatSeconds(_phase == _Phase.ready || _phase == _Phase.loading ? 0 : _recorder.movingTime(now).inSeconds),
+                            style: Theme.of(context).textTheme.displayMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
                           ),
-                          const SizedBox(height: 4),
-                          Text(tr('di {distance}', {'distance': formatDistance(_route!.distanceM)}), style: TextStyle(color: AppColors.muted, fontSize: 12)),
-                        ],
-                        const SizedBox(height: 14),
-                        switch (_phase) {
-                          _Phase.loading => Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(tr('Cerco il segnale GPS…'), style: TextStyle(color: AppColors.inkSoft)),
+                          if (_phase == _Phase.paused)
+                            Text(tr('In pausa'), style: const TextStyle(color: AppColors.amber, fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              _Live(label: tr('Distanza'), value: formatDistance(_recorder.distance)),
+                              _Live(label: tr('Passo'), value: formatPace(_recorder.currentPace())),
+                              _Live(label: tr('Medio'), value: formatPace(_recorder.averagePace(now))),
+                            ],
+                          ),
+                          if (route.length > 1) ...[
+                            const SizedBox(height: 10),
+                            LinearProgressIndicator(
+                              value: (_recorder.distance / (_route!.distanceM == 0 ? 1 : _route!.distanceM)).clamp(0.0, 1.0),
+                              minHeight: 6,
+                              borderRadius: BorderRadius.circular(6),
+                              backgroundColor: AppColors.stroke,
+                              color: AppColors.blue,
                             ),
-                          _Phase.ready => PrimaryButton(
-                              label: _position == null ? tr('Inizia (cerco il GPS…)') : tr('Inizia'),
-                              icon: Icons.play_arrow_rounded,
-                              onPressed: _start,
-                            ),
-                          _Phase.saving => PrimaryButton(label: tr('Salvo…'), loading: true, onPressed: null),
-                          _ => Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: _togglePause,
-                                    icon: Icon(_phase == _Phase.running ? Icons.pause_rounded : Icons.play_arrow_rounded),
-                                    label: Text(_phase == _Phase.running ? tr('Pausa') : tr('Riprendi')),
+                            const SizedBox(height: 4),
+                            Text(tr('di {distance}', {'distance': formatDistance(_route!.distanceM)}), style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                          ],
+                          const SizedBox(height: 14),
+                          switch (_phase) {
+                            _Phase.loading => Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Text(tr('Cerco il segnale GPS…'), style: TextStyle(color: AppColors.inkSoft)),
+                              ),
+                            _Phase.ready => PrimaryButton(
+                                label: _position == null ? tr('Inizia (cerco il GPS…)') : tr('Inizia'),
+                                icon: Icons.play_arrow_rounded,
+                                onPressed: _start,
+                              ),
+                            _Phase.saving => PrimaryButton(label: tr('Salvo…'), loading: true, onPressed: null),
+                            _ => Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _togglePause,
+                                      icon: Icon(_phase == _Phase.running ? Icons.pause_rounded : Icons.play_arrow_rounded),
+                                      label: Text(_phase == _Phase.running ? tr('Pausa') : tr('Riprendi')),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: PrimaryButton(label: tr('Fine'), icon: Icons.stop_rounded, color: AppColors.danger, onPressed: _finish),
-                                ),
-                              ],
-                            ),
-                        },
-                      ],
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: PrimaryButton(label: tr('Fine'), icon: Icons.stop_rounded, color: AppColors.danger, onPressed: _finish),
+                                  ),
+                                ],
+                              ),
+                          },
+                        ],
+                      ),
                     ),
                   ),
                 ),

@@ -35,7 +35,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
       await ref.read(workoutRepositoryProvider).delete(workoutId);
       ref.invalidate(myWorkoutsProvider);
       ref.invalidate(exploreWorkoutsProvider);
-      if (context.mounted) context.pop();
+      if (context.mounted) closePage(context);
     } on ApiException catch (e) {
       if (context.mounted) showMessage(context, e.message, error: true);
     }
