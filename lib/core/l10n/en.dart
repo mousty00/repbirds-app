@@ -89,6 +89,7 @@ const en = <String, String>{
   'Eliminare "{name}"?': 'Delete "{name}"?',
   'Elimina': 'Delete',
   'Esercizi': 'Exercises',
+  'Calendario': 'Calendar',
   'Nuovo esercizio': 'New exercise',
   'Cerca un esercizio': 'Search for an exercise',
   'Tutti': 'All',

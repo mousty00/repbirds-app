@@ -627,11 +627,13 @@ class _LowerCaseFormatter extends TextInputFormatter {
   }
 }
 
-/// Selettore a pillola (es. Amici · Richieste).
+/// Selettore a pillola (es. Amici · Richieste). Con [icons] le voci sono solo
+/// icone e la scritta compare accanto a quella selezionata.
 class SegmentedPill extends StatelessWidget {
-  const SegmentedPill({super.key, required this.options, required this.index, required this.onChanged});
+  const SegmentedPill({super.key, required this.options, required this.index, required this.onChanged, this.icons});
 
   final List<String> options;
+  final List<IconData>? icons;
   final int index;
   final ValueChanged<int> onChanged;
 
@@ -648,28 +650,48 @@ class SegmentedPill extends StatelessWidget {
         children: [
           for (var i = 0; i < options.length; i++)
             Expanded(
-              child: GestureDetector(
-                onTap: () => onChanged(i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: i == index ? AppColors.ink : Colors.transparent,
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    options[i],
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: i == index ? AppColors.onInk : AppColors.inkSoft,
+              // La voce aperta si allarga per far posto alla scritta.
+              flex: icons != null && i == index ? 2 : 1,
+              child: Semantics(
+                button: true,
+                selected: i == index,
+                label: icons != null ? options[i] : null,
+                excludeSemantics: icons != null,
+                child: GestureDetector(
+                  onTap: () => onChanged(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: i == index ? AppColors.ink : Colors.transparent,
+                      borderRadius: BorderRadius.circular(40),
                     ),
+                    alignment: Alignment.center,
+                    child: _label(i),
                   ),
                 ),
               ),
             ),
         ],
       ),
+    );
+  }
+
+  Widget _label(int i) {
+    final color = i == index ? AppColors.onInk : AppColors.inkSoft;
+    final text = Text(
+      options[i],
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(fontWeight: FontWeight.w600, color: color),
+    );
+    if (icons == null) return text;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icons![i], size: 20, color: color),
+        if (i == index) ...[const SizedBox(width: 6), Flexible(child: text)],
+      ],
     );
   }
 }

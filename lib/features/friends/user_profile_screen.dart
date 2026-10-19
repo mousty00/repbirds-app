@@ -83,10 +83,9 @@ class UserProfileScreen extends ConsumerWidget {
                         AddFriendButton(username: u.username, large: true),
                       if (overview != null) _Overview(overview: overview),
                       const SizedBox(height: 24),
-                      BodyCalendar(username: u.username, mine: u.username == me.username),
-                      const SizedBox(height: 24),
-                      _Tabs(
+                      ProfileTabs(
                         overview: overview,
+                        calendar: BodyCalendar(username: u.username, mine: u.username == me.username),
                         posts: AsyncView<List<Post>>(
                           value: posts,
                           onRetry: () => ref.invalidate(userPostsProvider(username)),
@@ -294,27 +293,29 @@ class _Overview extends StatelessWidget {
   }
 }
 
-/// Schede in alto: Post (aperta di base), Schede, Percorsi (solo agli amici) ed Esercizi.
-class _Tabs extends StatefulWidget {
-  const _Tabs({required this.overview, required this.posts});
+/// Schede in alto: Post (aperta di base), Schede, Percorsi (solo agli amici), Esercizi e Calendario del fisico.
+class ProfileTabs extends StatefulWidget {
+  const ProfileTabs({super.key, required this.overview, required this.posts, required this.calendar});
 
   final UserOverview? overview;
   final Widget posts;
+  final Widget calendar;
 
   @override
-  State<_Tabs> createState() => _TabsState();
+  State<ProfileTabs> createState() => _ProfileTabsState();
 }
 
-class _TabsState extends State<_Tabs> {
+class _ProfileTabsState extends State<ProfileTabs> {
   int _tab = 0;
 
   @override
   Widget build(BuildContext context) {
     final o = widget.overview;
-    final tabs = <(String, Widget Function())>[
-      (tr('Post'), () => widget.posts),
+    final tabs = <(String, IconData, Widget Function())>[
+      (tr('Post'), Icons.grid_view_rounded, () => widget.posts),
       (
         tr('Schede'),
+        Icons.fitness_center_rounded,
         () => _list([
               for (final w in o?.workouts ?? const <({String id, String name, int exercises})>[])
                 _Item(
@@ -329,6 +330,7 @@ class _TabsState extends State<_Tabs> {
       if (o?.routes != null)
         (
           tr('Percorsi'),
+          Icons.route_rounded,
           () => _list([
                 for (final r in o!.routes!)
                   _Item(
@@ -342,19 +344,26 @@ class _TabsState extends State<_Tabs> {
         ),
       (
         tr('Esercizi'),
+        Icons.sports_gymnastics_rounded,
         () => _list([
               for (final e in o?.exercises ?? const <({String id, String name, String muscleGroup})>[])
                 _Item(icon: Icons.sports_gymnastics_rounded, color: AppColors.lilac, title: e.name, subtitle: e.muscleGroup),
             ], tr('Nessun esercizio pubblico')),
       ),
+      (tr('Calendario'), Icons.calendar_month_rounded, () => widget.calendar),
     ];
     final tab = _tab.clamp(0, tabs.length - 1);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SegmentedPill(options: [for (final t in tabs) t.$1], index: tab, onChanged: (i) => setState(() => _tab = i)),
+        SegmentedPill(
+          options: [for (final t in tabs) t.$1],
+          icons: [for (final t in tabs) t.$2],
+          index: tab,
+          onChanged: (i) => setState(() => _tab = i),
+        ),
         const SizedBox(height: 16),
-        tabs[tab].$2(),
+        tabs[tab].$3(),
       ],
     );
   }

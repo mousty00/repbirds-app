@@ -244,6 +244,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ref.invalidate(friendsProvider);
               ref.invalidate(userPostsProvider(me.username));
               ref.invalidate(bodyPhotosProvider);
+              ref.invalidate(userOverviewProvider(me.username));
               await ref.read(sessionProvider.notifier).reloadProfile();
             },
             child: ListView(
@@ -320,27 +321,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 if (total > Duration.zero)
                   Text(tr('{duration} di allenamento', {'duration': formatDuration(total)}), style: t.bodyMedium?.copyWith(color: AppColors.muted)),
                 const SizedBox(height: 28),
-                BodyCalendar(username: me.username, mine: true),
-                const SizedBox(height: 28),
-                SectionHeader(tr('I miei post')),
-                AsyncView<List<Post>>(
-                  value: posts,
-                  onRetry: () => ref.invalidate(userPostsProvider(me.username)),
-                  loading: const SkeletonGrid(),
-                  data: (list) => list.isEmpty
-                      ? SoftCard(
-                          onTap: () => context.push('/posts/new'),
-                          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-                          child: Column(
-                            children: [
-                              Icon(Icons.photo_camera_rounded, size: 32, color: AppColors.muted),
-                              const SizedBox(height: 8),
-                              Text(tr('Condividi il tuo primo allenamento'),
-                                  style: const TextStyle(fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        )
-                      : PostGrid(posts: list),
+                ProfileTabs(
+                  overview: ref.watch(userOverviewProvider(me.username)).value,
+                  calendar: BodyCalendar(username: me.username, mine: true),
+                  posts: AsyncView<List<Post>>(
+                    value: posts,
+                    onRetry: () => ref.invalidate(userPostsProvider(me.username)),
+                    loading: const SkeletonGrid(),
+                    data: (list) => list.isEmpty
+                        ? SoftCard(
+                            onTap: () => context.push('/posts/new'),
+                            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+                            child: Column(
+                              children: [
+                                Icon(Icons.photo_camera_rounded, size: 32, color: AppColors.muted),
+                                const SizedBox(height: 8),
+                                Text(tr('Condividi il tuo primo allenamento'),
+                                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          )
+                        : PostGrid(posts: list),
+                  ),
                 ),
               ],
             ),
