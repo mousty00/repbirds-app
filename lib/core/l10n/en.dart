@@ -650,4 +650,12 @@ const en = <String, String>{
   'Colore principale': 'Main color',
   'Sfondo': 'Background',
   'Salva e applica': 'Save and apply',
+  'Segnala un problema': 'Report a problem',
+  'Racconta cosa è successo e cosa ti aspettavi. Se puoi, aggiungi uno screenshot.': 'Tell us what happened and what you expected. If you can, add a screenshot.',
+  'Cosa non ha funzionato?': 'What went wrong?',
+  'Screenshot ({n}/{max})': 'Screenshots ({n}/{max})',
+  'Puoi allegare al massimo {n} immagini': 'You can attach up to {n} images',
+  'Descrivi il problema in almeno {n} caratteri': 'Describe the problem in at least {n} characters',
+  'Grazie! Abbiamo ricevuto la segnalazione': 'Thanks! We received your report',
+  'Invia segnalazione': 'Send report',
 };

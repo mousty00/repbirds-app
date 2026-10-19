@@ -650,4 +650,12 @@ const es = <String, String>{
   'Colore principale': 'Color principal',
   'Sfondo': 'Fondo',
   'Salva e applica': 'Guardar y aplicar',
+  'Segnala un problema': 'Informar de un problema',
+  'Racconta cosa è successo e cosa ti aspettavi. Se puoi, aggiungi uno screenshot.': 'Cuéntanos qué ha pasado y qué esperabas. Si puedes, añade una captura de pantalla.',
+  'Cosa non ha funzionato?': '¿Qué no ha funcionado?',
+  'Screenshot ({n}/{max})': 'Capturas ({n}/{max})',
+  'Puoi allegare al massimo {n} immagini': 'Puedes adjuntar hasta {n} imágenes',
+  'Descrivi il problema in almeno {n} caratteri': 'Describe el problema en al menos {n} caracteres',
+  'Grazie! Abbiamo ricevuto la segnalazione': '¡Gracias! Hemos recibido tu informe',
+  'Invia segnalazione': 'Enviar informe',
 };
