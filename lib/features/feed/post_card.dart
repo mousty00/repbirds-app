@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/app_image.dart';
 import '../../core/widgets/ui.dart';
+import '../../data/providers.dart';
 import '../../data/social_repository.dart';
 import '../../models/social.dart';
 import '../auth/session.dart';
@@ -64,10 +65,26 @@ class _PostCardState extends ConsumerState<PostCard> {
       }
       widget.onChanged?.call(_post);
     } on ApiException catch (e) {
-      setState(() => _post = before);
-      if (mounted) showMessage(context, e.message, error: true);
+      // 409 = il like c'era già, 404 = era già stato tolto: questa copia del post
+      // era vecchia. Si rilegge dal server invece di mostrare un errore.
+      final stale = e.statusCode == 409 || e.statusCode == 404;
+      final fresh = stale ? await _reload(repo) : null;
+      if (mounted) {
+        setState(() => _post = fresh ?? before);
+        if (fresh == null) showMessage(context, e.message, error: true);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+    // Le altre liste (feed, profilo, dettaglio) hanno ancora il post vecchio.
+    if (mounted) refreshPost(ref, _post);
+  }
+
+  Future<Post?> _reload(PostRepository repo) async {
+    try {
+      return await repo.byId(_post.id);
+    } on ApiException {
+      return null;
     }
   }
 

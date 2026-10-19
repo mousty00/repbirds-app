@@ -161,7 +161,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                   return ListView(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                     children: [
-                      PostCard(post: p, openOnTap: false, onChanged: (_) => refreshPosts(ref)),
+                      PostCard(post: p, openOnTap: false),
                       const SizedBox(height: 20),
                       SectionHeader(tr('Commenti · {count}', {'count': comments.length})),
                       if (comments.isEmpty)

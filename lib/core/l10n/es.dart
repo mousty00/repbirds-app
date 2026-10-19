@@ -154,6 +154,8 @@ const es = <String, String>{
   'Nessun utente trovato': 'No se encontró ningún usuario',
   'Richiesta inviata a @{username}': 'Solicitud enviada a @{username}',
   'Richiesta inviata': 'Solicitud enviada',
+  'Richiesta inviata · Annulla': 'Solicitud enviada · Cancelar',
+  'Richiesta a @{username} annullata': 'Solicitud a @{username} cancelada',
   'Aggiungi agli amici': 'Añadir a amigos',
   'Inviata': 'Enviada',
   'Aggiungi': 'Añadir',
