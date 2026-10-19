@@ -97,6 +97,12 @@ lo registra su `POST /devices` e al logout lo cancella.
 
 In ogni caso le notifiche restano visibili nella schermata Notifiche.
 
+Con l'app aperta le notifiche arrivano anche in tempo reale da `GET /notifications/stream`
+(Server-Sent Events, `lib/data/notification_stream.dart`): il numero sulla campanella segue
+le non lette e la lista si ricarica a ogni nuova notifica. In background lo stream si chiude
+(lì ci sono le push) e si riapre al ritorno. Nella schermata Notifiche una riga si cancella
+scorrendola verso sinistra, e il cestino in alto le cancella tutte.
+
 ## Funzionalità
 
 | Area | Cosa fa | Endpoint |

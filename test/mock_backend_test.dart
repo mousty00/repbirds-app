@@ -85,6 +85,19 @@ void main() {
     expect(MockBackend.uploads[p.image!.substring(MockBackend.uploadScheme.length)], [1, 2, 3]);
   });
 
+  test('segnalazione di un problema con screenshot in multipart', () async {
+    final res = await post('/bug-reports', FormData.fromMap({
+      'description': 'Il timer si blocca alla terza serie',
+      'images': [MultipartFile.fromBytes([1, 2, 3], filename: 'a.png')],
+    }));
+    expect(res['message'], 'Bug report received');
+
+    await expectLater(
+      post('/bug-reports', FormData.fromMap({'description': 'rotto'})),
+      throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 400)),
+    );
+  });
+
   test('notifiche: lista, badge, lettura e registrazione dispositivo', () async {
     final page = PageResult.fromJson(await get('/notifications') as Map<String, dynamic>, AppNotification.fromJson);
     expect(page.results, isNotEmpty);
@@ -99,6 +112,22 @@ void main() {
 
     await post('/devices', {'token': 'tok', 'platform': 'ANDROID'});
     await dio.delete<dynamic>('/devices', queryParameters: {'token': 'tok'});
+  });
+
+  test('notifiche: cancella una o tutte', () async {
+    Future<List<AppNotification>> list() async =>
+        PageResult.fromJson(await get('/notifications') as Map<String, dynamic>, AppNotification.fromJson).results;
+    final before = await list();
+    await dio.delete<dynamic>('/notifications/${before.first.id}');
+    expect((await list()).map((n) => n.id), isNot(contains(before.first.id)));
+    await expectLater(
+      dio.delete<dynamic>('/notifications/${before.first.id}'),
+      throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 404)),
+    );
+
+    await dio.delete<dynamic>('/notifications');
+    expect(await list(), isEmpty);
+    expect((await get('/notifications/unread-count'))['count'], 0);
   });
 
   test('corsa: percorso salvato, percorso pubblico di un amico salvato, corsa di gruppo e corsa registrata', () async {

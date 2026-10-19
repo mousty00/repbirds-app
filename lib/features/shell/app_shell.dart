@@ -6,6 +6,7 @@ import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ui.dart';
 import '../auth/session.dart';
+import '../onboarding/guide_screen.dart';
 import '../workouts/saved_session.dart';
 import 'create_sheet.dart';
 
@@ -22,6 +23,7 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   /// Una volta per avvio: se il sistema aveva chiuso l'app a metà allenamento, lo riapre.
+  /// Altrimenti, la prima volta che si entra nell'app, apre la guida.
   static bool _resumeChecked = false;
 
   @override
@@ -30,7 +32,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (_resumeChecked) return;
     _resumeChecked = true;
     SavedSession.load().then((s) {
-      if (s != null && mounted) context.push(s.route);
+      if (!mounted) return;
+      if (s != null) {
+        context.push(s.route);
+      } else if (!ref.read(guideProvider)) {
+        context.push('/guide');
+      }
     });
   }
 

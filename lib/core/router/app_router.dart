@@ -16,7 +16,9 @@ import '../../features/friends/user_profile_screen.dart';
 import '../../features/groups/group_detail_screen.dart';
 import '../../features/groups/group_form_screen.dart';
 import '../../features/groups/group_session_screen.dart';
+import '../../features/help/help_screen.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/onboarding/guide_screen.dart';
 import '../../features/onboarding/splash_screen.dart';
 import '../../features/onboarding/welcome_screen.dart';
 import '../../features/profile/history_screen.dart';
@@ -35,7 +37,7 @@ import '../../features/workouts/workouts_screen.dart';
 import '../../features/workouts/workout_detail_screen.dart';
 import '../../features/workouts/workout_form_screen.dart';
 import '../../features/workouts/workout_session_screen.dart';
-import '../../models/body_photo.dart';
+import '../../features/support/bug_report_screen.dart';
 import '../../models/workout.dart';
 import '../widgets/ui.dart';
 
@@ -121,6 +123,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Schermate a tutto schermo sopra le tab.
       GoRoute(
         parentNavigatorKey: _rootKey,
+        path: '/guide',
+        builder: (_, _) => const ContentWidth(child: GuideScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/help',
+        builder: (_, _) => const ContentWidth(child: HelpScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
         path: '/search',
         builder: (_, _) => const ContentWidth(child: SearchScreen()),
       ),
@@ -170,6 +182,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         path: '/profile/edit',
         builder: (_, _) => const ContentWidth(child: EditProfileScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/support/report',
+        builder: (_, _) => const ContentWidth(child: BugReportScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,

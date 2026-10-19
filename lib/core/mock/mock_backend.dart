@@ -898,6 +898,13 @@ class MockBackend extends Interceptor {
       _notifications.firstWhere((n) => n['id'] == id, orElse: () => throw _MockError(404, 'Notifica non trovata'))['read'] = true;
       return _ok('Notification marked as read');
     }
+    if (match('POST', '/bug-reports')) {
+      final form = o.data as FormData;
+      final description = form.fields.firstWhere((f) => f.key == 'description', orElse: () => const MapEntry('', '')).value;
+      if (description.trim().length < 10) throw _MockError(400, 'Describe the problem in 10 to 2000 characters');
+      if (form.files.where((f) => f.key == 'images').length > 5) throw _MockError(400, 'At most 5 images per report');
+      return _ok('Bug report received');
+    }
     if (match('POST', '/devices')) {
       devices.add('${body['token']}');
       return _ok('Device registered');

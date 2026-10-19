@@ -26,4 +26,10 @@ class ShareLinks {
   /// Pagine legali sul sito (non sono App/Universal Links: si aprono nel browser).
   static String get privacy => '$webBaseUrl/privacy';
   static String get terms => '$webBaseUrl/terms';
+
+  /// Casella del supporto (vedi STORE_PRIVACY.md).
+  static const supportEmail = 'support@repbirds.com';
+
+  /// Email al supporto, già con l'oggetto.
+  static String support(String subject) => Uri(scheme: 'mailto', path: supportEmail, queryParameters: {'subject': subject}).toString();
 }
