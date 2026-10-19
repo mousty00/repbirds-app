@@ -650,4 +650,12 @@ const fr = <String, String>{
   'Colore principale': 'Couleur principale',
   'Sfondo': 'Arrière-plan',
   'Salva e applica': 'Enregistrer et appliquer',
+  'Segnala un problema': 'Signaler un problème',
+  'Racconta cosa è successo e cosa ti aspettavi. Se puoi, aggiungi uno screenshot.': 'Raconte ce qui s\'est passé et ce que tu attendais. Si possible, ajoute une capture d\'écran.',
+  'Cosa non ha funzionato?': 'Qu\'est-ce qui n\'a pas fonctionné ?',
+  'Screenshot ({n}/{max})': 'Captures d\'écran ({n}/{max})',
+  'Puoi allegare al massimo {n} immagini': 'Tu peux joindre jusqu\'à {n} images',
+  'Descrivi il problema in almeno {n} caratteri': 'Décris le problème en au moins {n} caractères',
+  'Grazie! Abbiamo ricevuto la segnalazione': 'Merci ! Nous avons reçu ton signalement',
+  'Invia segnalazione': 'Envoyer le signalement',
 };
