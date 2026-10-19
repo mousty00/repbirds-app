@@ -14,10 +14,12 @@ import '../../core/widgets/async_view.dart';
 import '../../core/widgets/backgrounds.dart';
 import '../../core/widgets/ui.dart';
 import '../../data/providers.dart';
+import '../../data/body_photo_repository.dart';
 import '../../data/user_repository.dart';
 import '../../models/social.dart';
 import '../auth/session.dart';
 import 'themes.dart';
+import '../body/body_calendar.dart';
 import '../friends/user_profile_screen.dart';
 import '../share/share_actions.dart';
 import '../share/share_links.dart';
@@ -229,6 +231,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ref.invalidate(historyProvider);
               ref.invalidate(friendsProvider);
               ref.invalidate(userPostsProvider(me.username));
+              ref.invalidate(bodyPhotosProvider);
               await ref.read(sessionProvider.notifier).reloadProfile();
             },
             child: ListView(
@@ -304,6 +307,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 if (total > Duration.zero)
                   Text(tr('{duration} di allenamento', {'duration': formatDuration(total)}), style: t.bodyMedium?.copyWith(color: AppColors.muted)),
+                const SizedBox(height: 28),
+                BodyCalendar(username: me.username, mine: true),
                 const SizedBox(height: 28),
                 SectionHeader(tr('I miei post')),
                 AsyncView<List<Post>>(

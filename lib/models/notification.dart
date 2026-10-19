@@ -16,6 +16,7 @@ enum NotificationKind {
   workoutShared('WORKOUT_SHARED'),
   groupSessionCreated('GROUP_SESSION_CREATED'),
   groupSessionStarted('GROUP_SESSION_STARTED'),
+  bodyPhotoMonthly('BODY_PHOTO_MONTHLY'),
   unknown('');
 
   const NotificationKind(this.wire);
@@ -83,14 +84,19 @@ class AppNotification {
         NotificationKind.groupSessionStarted => detail != null
             ? tr('ha avviato la sessione di {workout}: entra!', {'workout': detail})
             : tr('ha avviato la sessione: entra!'),
+        NotificationKind.bodyPhotoMonthly =>
+          tr('Il mese è finito: confronta la prima e l\'ultima foto del tuo fisico'),
         NotificationKind.unknown => tr('ha interagito con te'),
       };
 
   /// Dove porta il tap (sulla riga o sulla push), null se non c'è una schermata.
-  String? get route => routeFor(kind, referenceId, actor?.username);
+  String? get route => routeFor(kind, referenceId, actor?.username, detail);
 
-  static String? routeFor(NotificationKind kind, String? referenceId, [String? actorUsername]) {
+  static String? routeFor(NotificationKind kind, String? referenceId, [String? actorUsername, String? detail]) {
     switch (kind) {
+      case NotificationKind.bodyPhotoMonthly:
+        // detail è il mese, es. 2026-10; senza (dalla push) il mese da confrontare adesso
+        return detail != null ? '/body-photos/compare?month=$detail' : '/body-photos/compare';
       case NotificationKind.postLiked:
       case NotificationKind.postCommented:
         return referenceId != null ? '/posts/$referenceId' : null;

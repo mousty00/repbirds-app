@@ -12,6 +12,7 @@ import '../../data/providers.dart';
 import '../../models/social.dart';
 import '../../models/user.dart';
 import '../auth/session.dart';
+import '../body/body_calendar.dart';
 import '../feed/moderation.dart';
 import '../share/share_actions.dart';
 import 'friends_screen.dart';
@@ -81,6 +82,8 @@ class UserProfileScreen extends ConsumerWidget {
                       else
                         AddFriendButton(username: u.username, large: true),
                       if (overview != null) _Overview(overview: overview),
+                      const SizedBox(height: 24),
+                      BodyCalendar(username: u.username, mine: u.username == me.username),
                       const SizedBox(height: 24),
                       _Tabs(
                         overview: overview,

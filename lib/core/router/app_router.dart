@@ -7,6 +7,7 @@ import '../../features/auth/login_screen.dart';
 import '../../features/auth/session.dart';
 import '../../features/auth/signup_screen.dart';
 import '../../features/auth/verify_otp_screen.dart';
+import '../../features/body/body_compare_screen.dart';
 import '../../features/feed/create_post_screen.dart';
 import '../../features/feed/post_detail_screen.dart';
 import '../../features/friends/friends_screen.dart';
@@ -34,6 +35,7 @@ import '../../features/workouts/workouts_screen.dart';
 import '../../features/workouts/workout_detail_screen.dart';
 import '../../features/workouts/workout_form_screen.dart';
 import '../../features/workouts/workout_session_screen.dart';
+import '../../models/body_photo.dart';
 import '../../models/workout.dart';
 import '../widgets/ui.dart';
 
@@ -247,6 +249,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         path: '/notifications',
         builder: (_, _) => const ContentWidth(child: NotificationsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/body-photos/compare',
+        builder: (_, s) => ContentWidth(
+          child: Consumer(
+            builder: (context, ref, _) => BodyCompareScreen(
+              username: s.uri.queryParameters['user'] ?? ref.read(currentUserProvider).username,
+              month: parseMonthKey(s.uri.queryParameters['month']) ?? comparisonMonth(DateTime.now()),
+            ),
+          ),
+        ),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
