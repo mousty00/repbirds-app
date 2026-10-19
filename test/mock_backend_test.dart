@@ -208,4 +208,30 @@ void main() {
     expect(stranger.training, isNull);
     expect(stranger.routes, isNull);
   });
+  test('richiesta inviata: si vede tra le inviate e si può ritirare', () async {
+    await post('/friendship/create', null, {'friendUsername': 'luca.cali'});
+    final sent = (await get('/friendship/sent') as List).map((e) => Friendship.fromJson(e as Map<String, dynamic>)).toList();
+    final request = sent.singleWhere((f) => f.friend.username == 'luca.cali');
+
+    await expectLater(
+      post('/friendship/create', null, {'friendUsername': 'luca.cali'}),
+      throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 409)),
+    );
+
+    await dio.delete<dynamic>('/friendship/cancel/${request.id}');
+    expect((await get('/friendship/sent') as List), isEmpty);
+    await expectLater(
+      dio.delete<dynamic>('/friendship/cancel/${request.id}'),
+      throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 404)),
+    );
+  });
+
+  test('like doppio rifiutato come sul backend', () async {
+    final feed = PageResult.fromJson(await get('/posts') as Map<String, dynamic>, Post.fromJson);
+    final liked = feed.results.firstWhere((p) => p.likeBy('mousty') != null);
+    await expectLater(
+      post('/likes/create', {'postId': liked.id, 'userId': 'u1'}),
+      throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 409)),
+    );
+  });
 }

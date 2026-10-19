@@ -230,7 +230,9 @@ class UserRow extends StatelessWidget {
   }
 }
 
-/// Pulsante "Aggiungi" che invia la richiesta di amicizia.
+/// Pulsante "Aggiungi" che invia la richiesta di amicizia. Lo stato viene
+/// dalle richieste inviate sul server: se la richiesta è già partita mostra
+/// "Inviata" e un tap la ritira (non ne manda una seconda).
 class AddFriendButton extends ConsumerStatefulWidget {
   const AddFriendButton({super.key, required this.username, this.large = false});
 
@@ -242,17 +244,43 @@ class AddFriendButton extends ConsumerStatefulWidget {
 }
 
 class _AddFriendButtonState extends ConsumerState<AddFriendButton> {
-  bool _sent = false;
   bool _busy = false;
 
-  Future<void> _send() async {
+  Friendship? _pending(List<Friendship> sent) {
+    for (final f in sent) {
+      if (f.friend.username == widget.username) return f;
+    }
+    return null;
+  }
+
+  Future<void> _toggle(Friendship? pending) async {
+    if (_busy) return;
     setState(() => _busy = true);
+    final repo = ref.read(friendshipRepositoryProvider);
     try {
-      await ref.read(friendshipRepositoryProvider).add(widget.username);
-      if (mounted) setState(() => _sent = true);
-      if (mounted) showMessage(context, tr('Richiesta inviata a @{username}', {'username': widget.username}));
+      if (pending != null) {
+        await repo.cancel(pending.id);
+        if (mounted) showMessage(context, tr('Richiesta a @{username} annullata', {'username': widget.username}));
+      } else {
+        await repo.add(widget.username);
+        if (mounted) showMessage(context, tr('Richiesta inviata a @{username}', {'username': widget.username}));
+      }
     } on ApiException catch (e) {
-      if (mounted) showMessage(context, e.message, error: true);
+      // 409/404: lo stato mostrato era vecchio (richiesta già inviata o già
+      // ritirata). Basta riallinearsi, senza errore.
+      if (e.statusCode != 409 && e.statusCode != 404 && mounted) {
+        showMessage(context, e.message, error: true);
+      }
+    }
+    // Il pulsante resta in caricamento finché lo stato non arriva dal server.
+    if (!mounted) return;
+    ref
+      ..invalidate(friendsProvider)
+      ..invalidate(sentFriendRequestsProvider);
+    try {
+      await ref.read(sentFriendRequestsProvider.future);
+    } catch (_) {
+      // il pulsante mostra l'ultimo stato noto
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -260,22 +288,27 @@ class _AddFriendButtonState extends ConsumerState<AddFriendButton> {
 
   @override
   Widget build(BuildContext context) {
+    final sent = ref.watch(sentFriendRequestsProvider);
+    final pending = _pending(sent.value ?? const []);
+    final sentNow = pending != null;
+    final busy = _busy || (!sent.hasValue && sent.isLoading);
     if (widget.large) {
       return PrimaryButton(
-        label: _sent ? tr('Richiesta inviata') : tr('Aggiungi agli amici'),
-        icon: _sent ? Icons.check_rounded : Icons.person_add_alt_1_rounded,
-        loading: _busy,
-        onPressed: _sent ? null : _send,
+        label: sentNow ? tr('Richiesta inviata · Annulla') : tr('Aggiungi agli amici'),
+        icon: sentNow ? Icons.close_rounded : Icons.person_add_alt_1_rounded,
+        loading: busy,
+        color: sentNow ? AppColors.mint : null,
+        onPressed: busy ? null : () => _toggle(pending),
       );
     }
     return FilledButton(
       style: FilledButton.styleFrom(
         minimumSize: const Size(0, 38),
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        backgroundColor: _sent ? AppColors.mint : AppColors.ink,
+        backgroundColor: sentNow ? AppColors.mint : AppColors.ink,
       ),
-      onPressed: _sent || _busy ? null : _send,
-      child: Text(_sent ? tr('Inviata') : tr('Aggiungi'), style: const TextStyle(fontSize: 13)),
+      onPressed: busy ? null : () => _toggle(pending),
+      child: Text(sentNow ? tr('Inviata') : tr('Aggiungi'), style: const TextStyle(fontSize: 13)),
     );
   }
 }

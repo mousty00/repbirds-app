@@ -600,11 +600,16 @@ class MockBackend extends Interceptor {
     // Like e commenti
     if (match('POST', '/likes/create')) {
       final post = _postById('${body['postId']}');
+      if ((post['likes'] as List).any((l) => l['username'] == _meName)) {
+        throw _MockError(409, 'User has already liked this post');
+      }
       final like = {'id': _id('l'), 'username': _meName, 'createdAt': _iso(DateTime.now())};
       (post['likes'] as List).add(like);
       return {'id': like['id'], 'postId': post['id'], 'user': _me, 'createdAt': like['createdAt']};
     }
     if (match('DELETE', '/likes/delete/:id')) {
+      final found = _posts.any((p) => (p['likes'] as List).any((l) => l['id'] == last));
+      if (!found) throw _MockError(404, 'Like not found: $last');
       for (final p in _posts) {
         (p['likes'] as List).removeWhere((l) => l['id'] == last);
       }
@@ -641,6 +646,18 @@ class MockBackend extends Interceptor {
       return _friendships
           .where((f) => f['status'] == 'pending' && (f['friend'] as Map)['username'] == _meName)
           .toList();
+    }
+    if (match('GET', '/friendship/sent')) {
+      return _friendships
+          .where((f) => f['status'] == 'pending' && (f['user'] as Map)['username'] == _meName)
+          .toList();
+    }
+    if (match('DELETE', '/friendship/cancel/:id')) {
+      final f = _friendshipById(last);
+      if ((f['user'] as Map)['username'] != _meName) throw _MockError(403, 'Non puoi annullare questa richiesta');
+      if (f['status'] != 'pending') throw _MockError(404, 'Richiesta non trovata');
+      _friendships.remove(f);
+      return _ok('Friend request cancelled!');
     }
     if (match('POST', '/friendship/create')) {
       final other = _userBy('${q['friendUsername']}');

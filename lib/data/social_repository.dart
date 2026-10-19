@@ -96,8 +96,15 @@ class FriendshipRepository {
   Future<List<Friendship>> pendingRequests() async =>
       parseList(await _api.get<List<dynamic>>('/friendship/requests'), Friendship.fromJson);
 
+  /// Richieste inviate da me e non ancora accettate.
+  Future<List<Friendship>> sentRequests() async =>
+      parseList(await _api.get<List<dynamic>>('/friendship/sent'), Friendship.fromJson);
+
   Future<void> add(String friendUsername) =>
       _api.post<dynamic>('/friendship/create', query: {'friendUsername': friendUsername});
+
+  /// Ritira una richiesta inviata ancora in attesa.
+  Future<void> cancel(String id) => _api.delete<dynamic>('/friendship/cancel/$id');
 
   Future<void> accept(String id) => _api.get<dynamic>('/friendship/accept/$id');
 

@@ -128,6 +128,13 @@ final friendRequestsProvider = FutureProvider<List<Friendship>>((ref) {
   return ref.watch(friendshipRepositoryProvider).pendingRequests();
 });
 
+/// Richieste inviate da me, ancora in attesa: il pulsante "Aggiungi" le usa
+/// per mostrare "Inviata" anche dopo aver cambiato schermata.
+final sentFriendRequestsProvider = FutureProvider<List<Friendship>>((ref) {
+  ref.watch(userKeyProvider);
+  return ref.watch(friendshipRepositoryProvider).sentRequests();
+});
+
 final friendsPostsProvider = FutureProvider<List<Post>>((ref) {
   ref.watch(userKeyProvider);
   return ref.watch(postRepositoryProvider).friendsPosts();
@@ -193,4 +200,12 @@ void refreshNotifications(void Function(ProviderOrFamily provider) invalidate) {
 void refreshPosts(WidgetRef ref) {
   ref.invalidate(friendsPostsProvider);
   ref.invalidate(explorePostsProvider);
+}
+
+/// Dopo un like: ricarica tutte le liste in cui compare il post, così ogni
+/// schermata mostra lo stesso stato (e un secondo tap toglie davvero il like).
+void refreshPost(WidgetRef ref, Post post) {
+  refreshPosts(ref);
+  ref.invalidate(postProvider(post.id));
+  ref.invalidate(userPostsProvider(post.user.username));
 }
