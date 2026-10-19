@@ -63,8 +63,10 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   CircleIconButton(
                     icon: Icons.notifications_none_rounded,
-                    badge: notifications > 0,
-                    tooltip: tr('Notifiche'),
+                    badge: notifications,
+                    tooltip: notifications > 0
+                        ? tr('Notifiche, {count} da leggere', {'count': notifications})
+                        : tr('Notifiche'),
                     onTap: () => context.push('/notifications'),
                   ),
                 ],

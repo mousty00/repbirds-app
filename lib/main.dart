@@ -9,6 +9,8 @@ import 'core/router/app_router.dart';
 import 'core/sound/sounds.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode.dart';
+import 'data/notification_stream.dart';
+import 'data/providers.dart';
 import 'features/auth/session.dart';
 
 Future<void> main() async {
@@ -21,11 +23,28 @@ Future<void> main() async {
   final container = ProviderContainer();
   final push = container.read(pushServiceProvider);
   push.init();
-  // Registra il dispositivo per le push a ogni login (e all'avvio con sessione valida).
+  final live = container.read(notificationStreamProvider);
+  // Registra il dispositivo per le push a ogni login (e all'avvio con sessione valida)
+  // e apre lo stream delle notifiche in tempo reale; al logout lo chiude.
   container.listen(sessionProvider, (previous, next) {
     final user = next.value;
-    if (user != null && previous?.value?.id != user.id) push.onLogin();
+    if (user != null && previous?.value?.id != user.id) {
+      push.onLogin();
+      live
+        ..stop()
+        ..start();
+    }
+    if (user == null) live.stop();
   }, fireImmediately: true);
+  // In background lo stream si chiude (lì arrivano le push); al ritorno si riallinea tutto.
+  AppLifecycleListener(
+    onPause: live.stop,
+    onResume: () {
+      if (container.read(sessionProvider).value == null) return;
+      refreshNotifications(container.invalidate);
+      live.start();
+    },
+  );
 
   runApp(UncontrolledProviderScope(container: container, child: const RepBirdsApp()));
 }

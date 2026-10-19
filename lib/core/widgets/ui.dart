@@ -63,7 +63,7 @@ class CircleIconButton extends StatelessWidget {
     this.onTap,
     this.dark = false,
     this.size = 48,
-    this.badge = false,
+    this.badge = 0,
     this.tooltip,
   });
 
@@ -71,7 +71,8 @@ class CircleIconButton extends StatelessWidget {
   final VoidCallback? onTap;
   final bool dark;
   final double size;
-  final bool badge;
+  /// Numero sul bollino in alto a destra (es. notifiche non lette); 0 = niente bollino.
+  final int badge;
   final String? tooltip;
 
   @override
@@ -90,28 +91,57 @@ class CircleIconButton extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Icon(icon, size: size * 0.44, color: dark ? AppColors.onInk : AppColors.ink),
-              if (badge)
-                Positioned(
-                  top: size * 0.24,
-                  right: size * 0.26,
-                  child: Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: AppColors.blue,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.card, width: 1.5),
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
       ),
     );
-    return DecoratedBox(
+    final circle = DecoratedBox(
       decoration: const BoxDecoration(shape: BoxShape.circle, boxShadow: AppShadows.soft),
       child: tooltip == null ? button : Tooltip(message: tooltip!, child: button),
+    );
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        circle,
+        Positioned(
+          top: -3,
+          right: -3,
+          child: IgnorePointer(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+              child: badge > 0 ? CountBadge(count: badge, key: ValueKey(badge)) : const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Bollino col numero (99+ oltre i 99), es. le notifiche non lette sulla campanella.
+class CountBadge extends StatelessWidget {
+  const CountBadge({super.key, required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 20),
+      height: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.blue,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.card, width: 1.5),
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700, height: 1),
+      ),
     );
   }
 }

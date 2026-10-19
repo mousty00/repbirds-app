@@ -24,6 +24,12 @@ class NotificationRepository {
 
   Future<void> markAllRead() => _api.post<dynamic>('/notifications/read-all');
 
+  /// Toglie la notifica dalla lista (per sempre).
+  Future<void> delete(String id) => _api.delete<dynamic>('/notifications/$id');
+
+  /// Svuota la lista.
+  Future<void> deleteAll() => _api.delete<dynamic>('/notifications');
+
   /// [platform]: `ANDROID` o `IOS`.
   Future<void> registerDevice(String token, String platform) =>
       _api.post<dynamic>('/devices', data: {'token': token, 'platform': platform});

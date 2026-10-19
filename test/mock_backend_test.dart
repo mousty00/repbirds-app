@@ -101,6 +101,22 @@ void main() {
     await dio.delete<dynamic>('/devices', queryParameters: {'token': 'tok'});
   });
 
+  test('notifiche: cancella una o tutte', () async {
+    Future<List<AppNotification>> list() async =>
+        PageResult.fromJson(await get('/notifications') as Map<String, dynamic>, AppNotification.fromJson).results;
+    final before = await list();
+    await dio.delete<dynamic>('/notifications/${before.first.id}');
+    expect((await list()).map((n) => n.id), isNot(contains(before.first.id)));
+    await expectLater(
+      dio.delete<dynamic>('/notifications/${before.first.id}'),
+      throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 404)),
+    );
+
+    await dio.delete<dynamic>('/notifications');
+    expect(await list(), isEmpty);
+    expect((await get('/notifications/unread-count'))['count'], 0);
+  });
+
   test('corsa: percorso salvato, percorso pubblico di un amico salvato, corsa di gruppo e corsa registrata', () async {
     final plan = RoutePlan.fromJson(await post('/routes/plan', {
       'waypoints': [
