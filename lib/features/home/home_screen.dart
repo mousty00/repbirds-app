@@ -62,6 +62,12 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   CircleIconButton(
+                    icon: Icons.help_outline_rounded,
+                    tooltip: tr('Aiuto'),
+                    onTap: () => context.push('/help'),
+                  ),
+                  const SizedBox(width: 10),
+                  CircleIconButton(
                     icon: Icons.notifications_none_rounded,
                     badge: notifications,
                     tooltip: notifications > 0

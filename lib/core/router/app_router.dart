@@ -15,7 +15,9 @@ import '../../features/friends/user_profile_screen.dart';
 import '../../features/groups/group_detail_screen.dart';
 import '../../features/groups/group_form_screen.dart';
 import '../../features/groups/group_session_screen.dart';
+import '../../features/help/help_screen.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/onboarding/guide_screen.dart';
 import '../../features/onboarding/splash_screen.dart';
 import '../../features/onboarding/welcome_screen.dart';
 import '../../features/profile/history_screen.dart';
@@ -118,6 +120,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/feed', redirect: (_, _) => '/together'),
 
       // Schermate a tutto schermo sopra le tab.
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/guide',
+        builder: (_, _) => const ContentWidth(child: GuideScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/help',
+        builder: (_, _) => const ContentWidth(child: HelpScreen()),
+      ),
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/search',

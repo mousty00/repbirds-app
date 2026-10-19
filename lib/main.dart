@@ -12,6 +12,7 @@ import 'core/theme/theme_mode.dart';
 import 'data/notification_stream.dart';
 import 'data/providers.dart';
 import 'features/auth/session.dart';
+import 'features/onboarding/guide_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +20,7 @@ Future<void> main() async {
   await LanguageNotifier.load();
   await SoundNotifier.load();
   await ThemeNotifier.load();
+  await GuideNotifier.load();
 
   final container = ProviderContainer();
   final push = container.read(pushServiceProvider);
