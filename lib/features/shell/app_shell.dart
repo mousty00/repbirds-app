@@ -36,6 +36,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       if (s != null) {
         context.push(s.route);
       } else if (!ref.read(guideProvider)) {
+        // Vista appena aperta: chiudere l'app a metà guida non la fa ripartire.
+        ref.read(guideProvider.notifier).markSeen();
         context.push('/guide');
       }
     });
