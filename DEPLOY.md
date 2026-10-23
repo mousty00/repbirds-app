@@ -47,9 +47,13 @@ the app.
 
 ### Version
 
-`pubspec.yaml` → `version: 1.0.0+1` is `<name>+<build>`. The name is what users see; the build
+`pubspec.yaml` → `version: 1.0.0+13` is `<name>+<build>`. The name is what users see; the build
 number must go up on **every** upload to either store, or the upload is rejected. Bump it in
 `pubspec.yaml`, or override per build with `--build-name=1.0.1 --build-number=2`.
+
+The test builds made by CI on every push to `main` keep the name from `pubspec.yaml` and use
+`<pubspec build> + <run number>` as build number, so it goes up by one at each push (see [CI](#ci)).
+Builds you upload by hand must use a number higher than the last CI one.
 
 ### Optional: obfuscation
 
@@ -141,8 +145,8 @@ Review notes worth knowing before you submit:
 
 #### Upload key
 
-Play needs every upload signed with your own key. Today `android/app/build.gradle.kts` signs
-release builds with the **debug** key, which Play rejects.
+Play needs every upload signed with your own key. Without `key.properties` release builds are
+signed with the **debug** key, which Play rejects.
 
 1. Create the key once and back it up somewhere safe (losing it means asking Google for an
    upload key reset):
@@ -161,39 +165,8 @@ release builds with the **debug** key, which Play rejects.
    storeFile=/Users/<you>/repbirds-upload.jks
    ```
 
-3. In `android/app/build.gradle.kts`, load it and use it for release builds. Keep the debug
-   fallback so CI, which has no key, still builds:
-
-   ```kotlin
-   import java.util.Properties
-
-   val keystoreProperties = Properties().apply {
-       val file = rootProject.file("key.properties")
-       if (file.exists()) file.inputStream().use { load(it) }
-   }
-
-   android {
-       // ...
-       signingConfigs {
-           if (keystoreProperties.isNotEmpty()) {
-               create("release") {
-                   keyAlias = keystoreProperties.getProperty("keyAlias")
-                   keyPassword = keystoreProperties.getProperty("keyPassword")
-                   storeFile = file(keystoreProperties.getProperty("storeFile"))
-                   storePassword = keystoreProperties.getProperty("storePassword")
-               }
-           }
-       }
-       buildTypes {
-           release {
-               signingConfig = if (keystoreProperties.isNotEmpty())
-                   signingConfigs.getByName("release")
-               else
-                   signingConfigs.getByName("debug")
-           }
-       }
-   }
-   ```
+`android/app/build.gradle.kts` already loads `key.properties` and signs release builds with it,
+falling back to the debug key when the file is missing.
 
 On the first upload, accept **Play App Signing**: Google keeps the app signing key and your
 `.jks` is only the upload key.
@@ -316,6 +289,24 @@ online the links still work as web links, and Android asks which app to open the
 
 ## CI
 
-`.github/workflows/ci.yml` runs analyze and unit tests, builds a release APK (debug-signed, not
-publishable) and compiles iOS without signing. It doesn't publish anything; store uploads are
-manual with the commands above.
+- `.github/workflows/ci.yml` runs on pull requests: analyze, unit tests, a release APK
+  (debug-signed) and an unsigned iOS compile.
+- `.github/workflows/test-build.yml` runs on every push to `main` (and by hand from the Actions
+  tab): tests, then Android and iOS builds pointing to the staging API
+  `https://testapi.repbirds.com/api`. The version name stays the one in `pubspec.yaml` and the build
+  number is `<pubspec build> + <run number>`, so each push gets the next number. The APK, AAB and
+  IPA are attached to the run as artifacts for 30 days.
+
+Each signed part turns on when its secrets exist (Settings → Secrets and variables → Actions);
+without them the workflow still builds, debug-signed on Android and unsigned (no IPA) on iOS.
+
+| Secret | What |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | the upload keystore: `base64 -i ~/repbirds-upload.jks \| pbcopy` |
+| `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | the values of `key.properties` |
+| `IOS_CERTIFICATE_P12_BASE64` | your **Apple Development** and **Apple Distribution** certificates with their private keys, exported together from Keychain Access as one `.p12`: `base64 -i certs.p12 \| pbcopy` |
+| `IOS_CERTIFICATE_PASSWORD` | the password chosen when exporting the `.p12` |
+| `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_P8` | an App Store Connect API key with the **Admin** role (Users and Access → Integrations → App Store Connect API); the `.p8` content goes in as text. Xcode uses it to create and refresh the provisioning profiles of the app and of the widget extension |
+
+Set the repository **variable** `TESTFLIGHT_UPLOAD` to `true` to also upload each IPA to
+TestFlight. The workflow doesn't upload anything to Google Play.
