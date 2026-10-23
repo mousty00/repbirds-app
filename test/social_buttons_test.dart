@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/network/api_exception.dart';
-import 'package:gymbro_app/data/providers.dart';
-import 'package:gymbro_app/data/social_repository.dart';
-import 'package:gymbro_app/features/auth/session.dart';
-import 'package:gymbro_app/features/feed/post_card.dart';
-import 'package:gymbro_app/features/friends/friends_screen.dart';
-import 'package:gymbro_app/models/social.dart';
-import 'package:gymbro_app/models/user.dart';
+import 'package:repbirds_app/core/network/api_exception.dart';
+import 'package:repbirds_app/data/providers.dart';
+import 'package:repbirds_app/data/social_repository.dart';
+import 'package:repbirds_app/features/auth/session.dart';
+import 'package:repbirds_app/features/feed/post_card.dart';
+import 'package:repbirds_app/features/friends/friends_screen.dart';
+import 'package:repbirds_app/models/social.dart';
+import 'package:repbirds_app/models/user.dart';
 
 const _me = User(id: 'u1', username: 'mousty');
 const _meSimple = SimpleUser(id: 'u1', username: 'mousty');

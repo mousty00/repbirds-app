@@ -4,7 +4,7 @@ part of 'mock_backend.dart';
 const _unhandled = Object();
 
 /// Corsa in modalità mock: percorsi, corse di gruppo e corse registrate, con le
-/// stesse forme JSON di `/routes`, `/run-events` e `/runs` di gymbro-api.
+/// stesse forme JSON di `/routes`, `/run-events` e `/runs` di repbirds-api.
 extension _MockRunning on MockBackend {
   void _seedRunning(Map<String, dynamic> giulia, Map<String, dynamic> marco, Map<String, dynamic> sara) {
     // Milano: giro del Parco Sempione, Navigli, e un lungo dell'Idroscalo di Giulia

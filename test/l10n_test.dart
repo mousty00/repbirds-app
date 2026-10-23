@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/l10n/en.dart';
-import 'package:gymbro_app/core/l10n/es.dart';
-import 'package:gymbro_app/core/l10n/fr.dart';
-import 'package:gymbro_app/core/l10n/l10n.dart';
+import 'package:repbirds_app/core/l10n/en.dart';
+import 'package:repbirds_app/core/l10n/es.dart';
+import 'package:repbirds_app/core/l10n/fr.dart';
+import 'package:repbirds_app/core/l10n/l10n.dart';
 
 /// Tutti i testi passati a tr() nel codice, come stringhe.
 Set<String> sourceKeys() {

@@ -8,7 +8,7 @@ import '../mock/mock_backend.dart';
 import '../storage/token_storage.dart';
 import 'api_exception.dart';
 
-/// Client HTTP verso gymbro-api.
+/// Client HTTP verso repbirds-api.
 ///
 /// - aggiunge `Authorization: Bearer <token>` a ogni richiesta;
 /// - su 401 prova una volta `POST /auth/refresh` con il refresh token

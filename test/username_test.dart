@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/widgets/ui.dart';
+import 'package:repbirds_app/core/widgets/ui.dart';
 
 void main() {
   test('username: maiuscole e spazi spariscono mentre scrivi', () {

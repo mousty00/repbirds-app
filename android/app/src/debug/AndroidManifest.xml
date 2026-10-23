@@ -4,7 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- Solo debug/profile: permette di usare gymbro-api locale in http://
+    <!-- Solo debug/profile: permette di usare repbirds-api locale in http://
          (es. http://10.0.2.2:8080/api dall'emulatore). La release resta solo https. -->
     <application android:usesCleartextTraffic="true"/>
 </manifest>

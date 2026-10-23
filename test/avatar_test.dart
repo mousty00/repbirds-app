@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/widgets/ui.dart';
+import 'package:repbirds_app/core/widgets/ui.dart';
 
 void main() {
   Future<Size> imageSize(WidgetTester tester, {required bool ring}) async {

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:gymbro_app/features/workouts/saved_session.dart';
-import 'package:gymbro_app/features/workouts/session_progress.dart';
-import 'package:gymbro_app/models/workout.dart';
+import 'package:repbirds_app/features/workouts/saved_session.dart';
+import 'package:repbirds_app/features/workouts/session_progress.dart';
+import 'package:repbirds_app/models/workout.dart';
 
 WorkoutExercise ex(String id, int sets) =>
     WorkoutExercise(id: id, workoutId: 'w', exerciseId: id, exerciseName: id, sets: sets, reps: 10, restSeconds: 60, position: 0);

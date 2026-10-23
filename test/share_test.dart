@@ -2,17 +2,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/mock/mock_backend.dart';
+import 'package:repbirds_app/core/mock/mock_backend.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:gymbro_app/features/share/share_actions.dart';
-import 'package:gymbro_app/features/share/share_cards.dart';
-import 'package:gymbro_app/features/share/share_links.dart';
-import 'package:gymbro_app/models/notification.dart';
-import 'package:gymbro_app/models/running.dart';
-import 'package:gymbro_app/models/social.dart';
-import 'package:gymbro_app/models/user.dart';
-import 'package:gymbro_app/models/workout.dart';
+import 'package:repbirds_app/features/share/share_actions.dart';
+import 'package:repbirds_app/features/share/share_cards.dart';
+import 'package:repbirds_app/features/share/share_links.dart';
+import 'package:repbirds_app/models/notification.dart';
+import 'package:repbirds_app/models/running.dart';
+import 'package:repbirds_app/models/social.dart';
+import 'package:repbirds_app/models/user.dart';
+import 'package:repbirds_app/models/workout.dart';
 
 void main() {
   setUpAll(() => initializeDateFormatting('it'));

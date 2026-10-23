@@ -13,7 +13,7 @@ part 'mock_running.dart';
 /// Backend finto in memoria, attivo quando `Env.useMock` è vero
 /// (`flutter run -t lib/main_mock.dart` o `--dart-define=USE_MOCK=true`).
 ///
-/// È un interceptor di dio: risponde alle stesse rotte di gymbro-api con le
+/// È un interceptor di dio: risponde alle stesse rotte di repbirds-api con le
 /// stesse forme JSON, così repository, modelli e schermate restano identici.
 /// I dati vivono in memoria: le modifiche (post, like, schede, gruppi…)
 /// valgono finché l'app resta aperta.

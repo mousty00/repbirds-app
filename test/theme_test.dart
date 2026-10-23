@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/theme/app_theme.dart';
+import 'package:repbirds_app/core/theme/app_theme.dart';
 
 /// Widget const che legge AppColors senza dipendere dal Theme: è il caso che
 /// AppThemeSync deve ridisegnare quando cambia il tema del dispositivo.

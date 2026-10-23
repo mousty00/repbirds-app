@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/widgets/rep_bird.dart';
-import 'package:gymbro_app/features/auth/session.dart';
-import 'package:gymbro_app/features/onboarding/splash_screen.dart';
-import 'package:gymbro_app/models/user.dart';
+import 'package:repbirds_app/core/widgets/rep_bird.dart';
+import 'package:repbirds_app/features/auth/session.dart';
+import 'package:repbirds_app/features/onboarding/splash_screen.dart';
+import 'package:repbirds_app/models/user.dart';
 
 class _NoSession extends SessionController {
   @override

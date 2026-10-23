@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:gymbro_app/core/config/env.dart';
-import 'package:gymbro_app/features/support/bug_report_screen.dart';
+import 'package:repbirds_app/core/config/env.dart';
+import 'package:repbirds_app/features/support/bug_report_screen.dart';
 
 void main() {
   setUp(() {

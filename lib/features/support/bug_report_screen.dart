@@ -17,7 +17,7 @@ import '../../data/user_repository.dart';
 class BugReportScreen extends ConsumerStatefulWidget {
   const BugReportScreen({super.key});
 
-  /// Stessi limiti di gymbro-api (BugReportService).
+  /// Stessi limiti di repbirds-api (BugReportService).
   static const minLength = 10;
   static const maxLength = 2000;
   static const maxImages = 5;

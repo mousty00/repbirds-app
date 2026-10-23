@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/models/notification.dart';
-import 'package:gymbro_app/core/network/api_exception.dart';
-import 'package:gymbro_app/models/group.dart';
-import 'package:gymbro_app/models/json.dart';
-import 'package:gymbro_app/models/page.dart';
-import 'package:gymbro_app/models/social.dart';
-import 'package:gymbro_app/models/workout.dart';
+import 'package:repbirds_app/models/notification.dart';
+import 'package:repbirds_app/core/network/api_exception.dart';
+import 'package:repbirds_app/models/group.dart';
+import 'package:repbirds_app/models/json.dart';
+import 'package:repbirds_app/models/page.dart';
+import 'package:repbirds_app/models/social.dart';
+import 'package:repbirds_app/models/workout.dart';
 
 void main() {
   test('Connection del backend → PageResult', () {

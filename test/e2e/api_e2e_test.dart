@@ -1,4 +1,4 @@
-// Test end to end dei repository dell'app contro un gymbro-api vero.
+// Test end to end dei repository dell'app contro un repbirds-api vero.
 //
 // Non gira con `flutter test` normale: serve un backend avviato e il file dove
 // il server SMTP di sviluppo salva le email (per leggere gli OTP).
@@ -17,17 +17,17 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/network/api_client.dart';
-import 'package:gymbro_app/core/network/api_exception.dart';
-import 'package:gymbro_app/core/storage/token_storage.dart';
-import 'package:gymbro_app/data/auth_repository.dart';
-import 'package:gymbro_app/data/social_repository.dart';
-import 'package:gymbro_app/data/user_repository.dart';
-import 'package:gymbro_app/data/workout_repository.dart';
-import 'package:gymbro_app/models/group.dart';
-import 'package:gymbro_app/models/json.dart';
-import 'package:gymbro_app/models/user.dart';
-import 'package:gymbro_app/models/workout.dart';
+import 'package:repbirds_app/core/network/api_client.dart';
+import 'package:repbirds_app/core/network/api_exception.dart';
+import 'package:repbirds_app/core/storage/token_storage.dart';
+import 'package:repbirds_app/data/auth_repository.dart';
+import 'package:repbirds_app/data/social_repository.dart';
+import 'package:repbirds_app/data/user_repository.dart';
+import 'package:repbirds_app/data/workout_repository.dart';
+import 'package:repbirds_app/models/group.dart';
+import 'package:repbirds_app/models/json.dart';
+import 'package:repbirds_app/models/user.dart';
+import 'package:repbirds_app/models/workout.dart';
 
 const api = String.fromEnvironment('E2E_API');
 const mails = String.fromEnvironment('E2E_MAILS');

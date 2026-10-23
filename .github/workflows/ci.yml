@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Lint e test unitari. I test e2e (tag `e2e`) servono un gymbro-api avviato
+  # Lint e test unitari. I test e2e (tag `e2e`) servono un repbirds-api avviato
   # e senza i --dart-define vengono saltati, quindi qui restano fuori.
   test:
     runs-on: ubuntu-latest
