@@ -78,6 +78,9 @@ class MockBackend extends Interceptor {
   String? _pendingEmail;
   final _users = <Map<String, dynamic>>[];
   final _exercises = <Map<String, dynamic>>[];
+
+  /// Esercizi di altri che ho salvato nei miei (`/exercises/:id/save`).
+  final _savedExercises = <String>{};
   final _workouts = <Map<String, dynamic>>[];
   final _history = <Map<String, dynamic>>[];
   final _groups = <Map<String, dynamic>>[];
@@ -132,7 +135,8 @@ class MockBackend extends Interceptor {
       ],
       'exercises': [
         for (final e in _exercises)
-          if (e['createdBy']['username'] == name && e['isPublic'] == true) {'id': e['id'], 'name': e['name'], 'muscleGroup': e['muscleGroup']},
+          if (e['createdBy']['username'] == name && e['isPublic'] == true)
+            {'id': e['id'], 'name': e['name'], 'muscleGroup': e['muscleGroup'], 'saved': _savedExercises.contains(e['id'])},
       ],
       'routes': close
           ? [
@@ -309,6 +313,13 @@ class MockBackend extends Interceptor {
     ]);
     _seedRunning(giulia, marco, sara);
     _seedBody(giulia);
+    // come la migrazione del backend: gli esercizi di altri che uso già nelle mie schede
+    for (final w in _workouts.where((w) => w['user']['username'] == _meName)) {
+      for (final we in w['workoutExercises'] as List) {
+        final e = _exercises.firstWhere((e) => e['id'] == we['exerciseId']);
+        if (e['createdBy']['username'] != _meName) _savedExercises.add('${e['id']}');
+      }
+    }
     // una corsa di gruppo: sessione del gruppo su un percorso
     _sessions.add(_session(_groups.first, null, _now.add(const Duration(days: 2, hours: 1)), {'giulia.fit': 'going'},
         routeId: '${_runRoutes.first['id']}', meetingPoint: 'Ingresso del parco'));
@@ -761,9 +772,23 @@ class MockBackend extends Interceptor {
 
     // Libreria esercizi
     if (match('GET', '/exercises')) {
-      final visible = _exercises.where((e) => e['isPublic'] == true || (e['createdBy'] as Map)['username'] == _meName).toList()
+      // i miei più quelli salvati: i pubblici degli altri stanno nel loro profilo
+      final mine = _exercises.where((e) => (e['createdBy'] as Map)['username'] == _meName || _savedExercises.contains(e['id'])).toList()
         ..sort((a, b) => '${a['name']}'.compareTo('${b['name']}'));
-      return _page(visible);
+      return _page(mine);
+    }
+    if (match('POST', '/exercises/:id/save')) {
+      final id = seg[1];
+      final e = _exercises.firstWhere((e) => e['id'] == id && e['isPublic'] == true,
+          orElse: () => throw _MockError(404, 'Esercizio non trovato'));
+      if ((e['createdBy'] as Map)['username'] == _meName) throw _MockError(409, 'È già tra i tuoi esercizi');
+      _savedExercises.add(id);
+      return {'message': 'Exercise saved!', 'result': e};
+    }
+    if (match('DELETE', '/exercises/:id/save')) {
+      final id = seg[1];
+      if (!_savedExercises.remove(id)) throw _MockError(404, 'Esercizio non trovato');
+      return _ok('Exercise removed from your list!');
     }
     if (match('POST', '/exercises/create')) {
       final e = {...body, 'id': _id('e'), 'createdBy': _me};

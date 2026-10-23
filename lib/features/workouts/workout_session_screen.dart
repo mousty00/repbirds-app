@@ -18,13 +18,16 @@ import '../../core/widgets/ui.dart';
 import '../../data/providers.dart';
 import '../../data/workout_repository.dart';
 import '../../models/workout.dart';
+import '../auth/session.dart';
 import '../body/body_photo_prompt.dart';
+import 'exercise_picker.dart';
 import 'saved_session.dart';
 import 'session_progress.dart';
 
 /// Sessione live, una card alla volta: la serie da fare, oppure solo il
 /// recupero. Durata e recupero si calcolano dagli orari, quindi restano giusti
-/// anche se esci dall'app; a fine recupero arriva una notifica.
+/// anche se esci dall'app; a fine recupero arriva una notifica. Se la scheda è
+/// mia la posso modificare senza uscire: esercizi, serie, peso, recupero, nome.
 class WorkoutSessionScreen extends ConsumerStatefulWidget {
   const WorkoutSessionScreen({super.key, required this.workoutId, this.groupId, this.startedAt});
 
@@ -45,6 +48,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
   bool _resumeChecked = false;
   final _notes = TextEditingController();
   SessionProgress? _progress;
+  /// Gli esercizi su cui è costruito [_progress]: se la scheda cambia, si rifà.
+  List<WorkoutExercise>? _progressOf;
   Timer? _ticker;
   DateTime? _restEndsAt;
   int _restTotal = 0;
@@ -221,7 +226,66 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
     if (mounted) context.pop();
   }
 
+  // Modifiche alla scheda durante l'allenamento: vanno subito sul server, la
+  // scheda si ricarica e le serie già fatte restano (sono per id).
+
+  void _refreshWorkout() {
+    ref.invalidate(workoutProvider(widget.workoutId));
+    ref.invalidate(myWorkoutsProvider);
+  }
+
+  Future<void> _addExercise(Workout w) async {
+    final position = w.exercises.fold<int>(0, (a, e) => math.max(a, e.position)) + 1;
+    final input = await showExerciseEditor(context, workoutId: w.id, position: position);
+    if (input == null) return;
+    try {
+      await ref.read(workoutRepositoryProvider).addExercise(input);
+      _refreshWorkout();
+      if (mounted) showMessage(context, tr('Esercizio aggiunto alla scheda'));
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message, error: true);
+    }
+  }
+
+  Future<void> _editExercise(WorkoutExercise we) async {
+    final input = await showExerciseEditor(context, workoutId: we.workoutId, position: we.position, initial: we);
+    if (input == null) return;
+    try {
+      await ref.read(workoutRepositoryProvider).updateExercise(input);
+      _refreshWorkout();
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message, error: true);
+    }
+  }
+
+  Future<void> _removeExercise(WorkoutExercise we) async {
+    final ok = await confirm(context,
+        title: tr('Rimuovere l\'esercizio?'), message: tr('Lo togli anche dalla scheda.'), ok: tr('Rimuovi'), destructive: true);
+    if (!ok) return;
+    try {
+      await ref.read(workoutRepositoryProvider).removeExercise(we.id);
+      _refreshWorkout();
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message, error: true);
+    }
+  }
+
+  /// Ricostruisce l'avanzamento sugli esercizi nuovi, tenendo serie fatte ed esercizio corrente.
+  SessionProgress _progressFor(Workout w) {
+    final old = _progress;
+    if (old != null && identical(_progressOf, w.exercises)) return old;
+    final focusId = old?.current?.id;
+    final focus = focusId == null ? (_resume?.focus ?? 0) : w.exercises.indexWhere((e) => e.id == focusId);
+    _progressOf = w.exercises;
+    final done = old?.done ?? _resume?.done ?? const <String, int>{};
+    _progress = SessionProgress(w.exercises)..restore(done, focus < 0 ? (old?.focusIndex ?? 0) : focus);
+    if (_lastDone != null && !w.exercises.any((e) => e.id == _lastDone!.id)) _lastDone = null;
+    if (old != null) WidgetsBinding.instance.addPostFrameCallback((_) => _save());
+    return _progress!;
+  }
+
   void _showList(Workout w, SessionProgress p) {
+    final editable = w.user?.username == ref.read(currentUserProvider).username;
     showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
@@ -243,6 +307,30 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
           Navigator.pop(ctx);
           _finish(w);
         },
+        onAdd: editable
+            ? () {
+                Navigator.pop(ctx);
+                _addExercise(w);
+              }
+            : null,
+        onEdit: editable
+            ? (e) {
+                Navigator.pop(ctx);
+                _editExercise(e);
+              }
+            : null,
+        onRemove: editable
+            ? (e) {
+                Navigator.pop(ctx);
+                _removeExercise(e);
+              }
+            : null,
+        onEditWorkout: editable
+            ? () {
+                Navigator.pop(ctx);
+                context.push('/workout/${w.id}/edit', extra: w);
+              }
+            : null,
       ),
     );
   }
@@ -267,7 +355,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
             loading: const SkeletonDetail(),
             data: (w) {
               if (!_resumeChecked) return const SkeletonDetail();
-              final p = _progress ??= SessionProgress(w.exercises)..restore(_resume?.done ?? const {}, _resume?.focus ?? 0);
+              final p = _progressFor(w);
+              final editable = w.user?.username == ref.watch(currentUserProvider).username;
               final resting = _restEndsAt != null;
               final bar = Row(
                 children: [
@@ -292,8 +381,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
               final card = resting
                   ? _RestCard(left: _restLeft, total: _restTotal, elapsed: _elapsed)
                   : p.allDone
-                      ? _DoneCard(progress: p)
-                      : _SetCard(progress: p);
+                      ? _DoneCard(progress: p, onAdd: editable ? () => _addExercise(w) : null)
+                      : _SetCard(progress: p, onEdit: editable ? () => _editExercise(p.current!) : null);
               final Widget actions = resting
                   ? Row(
                       children: [
@@ -342,9 +431,12 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
 /// La serie da fare: esercizio, serie, ripetizioni e peso. Sull'ultima serie,
 /// e solo lì, cosa arriva dopo. Sul viola del logo, testo bianco.
 class _SetCard extends StatelessWidget {
-  const _SetCard({required this.progress});
+  const _SetCard({required this.progress, this.onEdit});
 
   final SessionProgress progress;
+
+  /// Cambia serie, ripetizioni, peso o recupero di questo esercizio nella scheda.
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +450,20 @@ class _SetCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(tr('Esercizio {n} di {total}', {'n': p.currentIndex! + 1, 'total': p.exercises.length}), style: muted),
+          Row(
+            children: [
+              Expanded(
+                child: Text(tr('Esercizio {n} di {total}', {'n': p.currentIndex! + 1, 'total': p.exercises.length}), style: muted),
+              ),
+              if (onEdit != null)
+                IconButton(
+                  tooltip: tr('Modifica esercizio'),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.tune_rounded, color: Colors.white),
+                ),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(
             e.exerciseName ?? tr('Esercizio'),
@@ -474,9 +579,12 @@ class _RestCard extends StatelessWidget {
 }
 
 class _DoneCard extends StatelessWidget {
-  const _DoneCard({required this.progress});
+  const _DoneCard({required this.progress, this.onAdd});
 
   final SessionProgress progress;
+
+  /// Ancora energie: un esercizio in più nella scheda.
+  final VoidCallback? onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -497,6 +605,15 @@ class _DoneCard extends StatelessWidget {
             tr('{done} / {total} serie completate', {'done': progress.doneSets, 'total': progress.totalSets}),
             style: const TextStyle(color: Colors.white70),
           ),
+          if (onAdd != null) ...[
+            const SizedBox(height: 14),
+            TextButton.icon(
+              onPressed: onAdd,
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+              icon: const Icon(Icons.add_rounded),
+              label: Text(tr('Aggiungi esercizio')),
+            ),
+          ],
         ],
       ),
     );
@@ -534,7 +651,8 @@ class _SoftButton extends StatelessWidget {
 }
 
 /// Gli esercizi della scheda, con il check verde su quelli finiti. Toccandone
-/// uno ci vai; in fondo le note e "Termina e salva".
+/// uno ci vai; se la scheda è mia li modifico, tolgo o aggiungo da qui. In
+/// fondo le note e "Termina e salva".
 class _ExerciseListSheet extends StatelessWidget {
   const _ExerciseListSheet({
     required this.progress,
@@ -542,6 +660,10 @@ class _ExerciseListSheet extends StatelessWidget {
     required this.saving,
     required this.onPick,
     required this.onFinish,
+    this.onAdd,
+    this.onEdit,
+    this.onRemove,
+    this.onEditWorkout,
   });
 
   final SessionProgress progress;
@@ -549,6 +671,12 @@ class _ExerciseListSheet extends StatelessWidget {
   final bool saving;
   final ValueChanged<WorkoutExercise> onPick;
   final VoidCallback onFinish;
+
+  /// Null se la scheda non è mia: niente modifiche.
+  final VoidCallback? onAdd;
+  final ValueChanged<WorkoutExercise>? onEdit;
+  final ValueChanged<WorkoutExercise>? onRemove;
+  final VoidCallback? onEditWorkout;
 
   @override
   Widget build(BuildContext context) {
@@ -562,7 +690,17 @@ class _ExerciseListSheet extends StatelessWidget {
             shrinkWrap: true,
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             children: [
-              Text(tr('Esercizi della scheda'), style: Theme.of(context).textTheme.headlineSmall),
+              Row(
+                children: [
+                  Expanded(child: Text(tr('Esercizi della scheda'), style: Theme.of(context).textTheme.headlineSmall)),
+                  if (onEditWorkout != null)
+                    TextButton.icon(
+                      onPressed: onEditWorkout,
+                      icon: const Icon(Icons.edit_rounded, size: 18),
+                      label: Text(tr('Modifica scheda')),
+                    ),
+                ],
+              ),
               const SizedBox(height: 4),
               Text(
                 tr('{done} / {total} serie completate', {'done': p.doneSets, 'total': p.totalSets}),
@@ -582,7 +720,34 @@ class _ExerciseListSheet extends StatelessWidget {
                         ),
                   title: Text(e.exerciseName ?? tr('Esercizio'), style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(e.summary),
-                  trailing: Text('${p.doneOf(e)}/${e.sets}', style: TextStyle(color: AppColors.inkSoft)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('${p.doneOf(e)}/${e.sets}', style: TextStyle(color: AppColors.inkSoft)),
+                      if (onEdit != null)
+                        PopupMenuButton<bool>(
+                          tooltip: tr('Modifica esercizio'),
+                          icon: Icon(Icons.more_vert_rounded, color: AppColors.muted),
+                          onSelected: (remove) => remove ? onRemove!(e) : onEdit!(e),
+                          itemBuilder: (_) => [
+                            PopupMenuItem(value: false, child: Text(tr('Modifica'))),
+                            PopupMenuItem(
+                              value: true,
+                              child: Text(tr('Rimuovi'), style: const TextStyle(color: AppColors.danger)),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              if (onAdd != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: OutlinedButton.icon(
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.add_rounded),
+                    label: Text(tr('Aggiungi esercizio')),
+                  ),
                 ),
               const SizedBox(height: 12),
               TextField(

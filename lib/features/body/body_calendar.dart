@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,9 +13,11 @@ import '../../core/widgets/app_image.dart';
 import '../../core/widgets/ui.dart';
 import '../../data/body_photo_repository.dart';
 import '../../models/body_photo.dart';
+import 'body_photo_prompt.dart';
 
 /// Calendario mensile delle foto del fisico di [username]. Il proprietario
-/// ([mine]) vede anche le private e può cambiarne la visibilità o eliminarle.
+/// ([mine]) vede anche le private, ne aggiunge quando vuole (anche come
+/// storia) e può cambiarne la visibilità o eliminarle.
 class BodyCalendar extends ConsumerStatefulWidget {
   const BodyCalendar({super.key, required this.username, this.mine = false});
 
@@ -91,18 +95,30 @@ class _BodyCalendarState extends ConsumerState<BodyCalendar> {
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
-                    widget.mine
-                        ? tr('Nessuna foto questo mese. Alla fine di un allenamento puoi aggiungerne una.')
-                        : tr('Nessuna foto pubblica questo mese.'),
+                    widget.mine ? tr('Nessuna foto questo mese.') : tr('Nessuna foto pubblica questo mese.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.muted, fontSize: 13),
                   ),
                 ),
+              if (widget.mine) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _add,
+                  icon: const Icon(Icons.add_a_photo_rounded),
+                  label: Text(tr('Aggiungi foto')),
+                ),
+              ],
             ],
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _add() async {
+    if (!await showBodyPhotoPrompt(context) || !mounted) return;
+    showMessage(context, tr('Foto salvata nel calendario'));
+    setState(() => _month = monthOf(DateTime.now()));
   }
 
   /// Negli ultimi tre giorni del mese corrente, o nella prima settimana per il
@@ -316,8 +332,9 @@ class _BodyPhotoViewerState extends ConsumerState<_BodyPhotoViewer> {
     setState(() => _busy = true);
     try {
       final updated = await ref.read(bodyPhotoRepositoryProvider).setVisibility(_current.id, value);
-      setState(() => _photos[_index] = _current.copyWith(isPublic: updated.isPublic));
+      setState(() => _photos[_index] = _current.copyWith(isPublic: updated.isPublic, isStory: updated.isStory));
       ref.invalidate(bodyPhotosProvider);
+      ref.invalidate(bodyStoriesProvider);
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);
     } finally {
@@ -332,6 +349,7 @@ class _BodyPhotoViewerState extends ConsumerState<_BodyPhotoViewer> {
     try {
       await ref.read(bodyPhotoRepositoryProvider).delete(_current.id);
       ref.invalidate(bodyPhotosProvider);
+      ref.invalidate(bodyStoriesProvider);
       if (mounted) Navigator.pop(context);
     } on ApiException catch (e) {
       if (mounted) {
@@ -387,6 +405,12 @@ class _BodyPhotoViewerState extends ConsumerState<_BodyPhotoViewer> {
                     Text(tr('Dopo {workout}', {'workout': p.workoutName}),
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   Text(formatDayTime(p.takenAt), style: const TextStyle(color: Colors.white70)),
+                  if (p.isLiveStory(DateTime.now()))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Tag(tr('Nelle storie ancora per {n} h', {'n': math.max(1, p.storyUntil!.difference(DateTime.now()).inHours)}),
+                          icon: Icons.amp_stories_rounded, color: AppColors.pink),
+                    ),
                   if (widget.mine)
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
@@ -395,7 +419,11 @@ class _BodyPhotoViewerState extends ConsumerState<_BodyPhotoViewer> {
                       secondary: Icon(p.isPublic ? Icons.public_rounded : Icons.lock_rounded, color: Colors.white70),
                       title: Text(tr('Visibile a tutti'), style: const TextStyle(color: Colors.white)),
                       subtitle: Text(
-                        p.isPublic ? tr('Chi apre il tuo profilo la vede nel calendario.') : tr('La vedi solo tu.'),
+                        p.isPublic
+                            ? (p.isLiveStory(DateTime.now())
+                                ? tr('Rendendola privata esce anche dalle storie.')
+                                : tr('Chi apre il tuo profilo la vede nel calendario.'))
+                            : tr('La vedi solo tu.'),
                         style: const TextStyle(color: Colors.white70),
                       ),
                     ),

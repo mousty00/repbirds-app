@@ -27,15 +27,21 @@ class BodyPhotoRepository {
     required List<int> imageBytes,
     required String imageName,
     required bool isPublic,
+    bool asStory = false,
     String? workoutHistoryId,
   }) async {
     final form = FormData()..files.add(MapEntry('imageFile', MultipartFile.fromBytes(imageBytes, filename: imageName)));
     final res = await _api.post<Json>('/body-photos', data: form, query: {
       'isPublic': isPublic,
+      if (asStory) 'asStory': true,
       'workoutHistoryId': ?workoutHistoryId,
     });
     return BodyPhoto.fromJson(Map<String, dynamic>.from(res['result'] as Map));
   }
+
+  /// Le storie delle ultime 24 ore, mie e dei miei amici: prima le mie, poi le più recenti.
+  Future<List<BodyStories>> stories() async =>
+      parseList(await _api.get<List<dynamic>>('/body-photos/stories'), BodyStories.fromJson);
 
   Future<BodyPhoto> setVisibility(String id, bool isPublic) async =>
       BodyPhoto.fromJson(await _api.patch<Json>('/body-photos/$id/visibility', data: {'isPublic': isPublic}));
@@ -45,6 +51,11 @@ class BodyPhotoRepository {
 
 final bodyPhotoRepositoryProvider =
     Provider<BodyPhotoRepository>((ref) => BodyPhotoRepository(ref.watch(apiClientProvider)));
+
+/// La barra delle storie: io e i miei amici.
+final bodyStoriesProvider = FutureProvider.autoDispose<List<BodyStories>>(
+  (ref) => ref.watch(bodyPhotoRepositoryProvider).stories(),
+);
 
 /// Un mese del calendario di un utente.
 final bodyPhotosProvider = FutureProvider.autoDispose.family<List<BodyPhoto>, ({String username, DateTime month})>(

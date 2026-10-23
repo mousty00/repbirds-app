@@ -71,4 +71,14 @@ void main() {
     await SavedSession(workoutId: 'w', startedAt: DateTime.now().subtract(const Duration(hours: 13))).save();
     expect(await SavedSession.load(), isNull);
   });
+
+  test('scheda modificata durante l\'allenamento: le serie fatte restano, l\'esercizio nuovo è da fare', () {
+    final before = SessionProgress([ex('a', 2), ex('b', 1)])..completeSet();
+    // tolgo una serie ad "a" e aggiungo "c": si riparte dagli stessi id
+    final after = SessionProgress([ex('a', 1), ex('b', 1), ex('c', 2)])..restore(before.done, before.focusIndex);
+    expect(after.isComplete(after.exercises[0]), isTrue);
+    expect(after.current!.id, 'b');
+    expect(after.totalSets, 4);
+    expect(after.doneSets, 1);
+  });
 }

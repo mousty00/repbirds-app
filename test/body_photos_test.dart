@@ -66,6 +66,32 @@ void main() {
       await dio.delete<dynamic>('/body-photos/${created.id}');
       expect((await month('mousty')).map((p) => p.id), isNot(contains(created.id)));
     });
+
+    Future<List<BodyStories>> stories() async =>
+        ((await dio.get<dynamic>('/body-photos/stories')).data as List).map((e) => BodyStories.fromJson(e as Map<String, dynamic>)).toList();
+
+    test('storie: anche senza allenamento, pubbliche, prima la mia; privata esce dalle storie', () async {
+      final before = await stories();
+      expect(before.map((s) => s.user.username), contains('giulia.fit'));
+      expect(before.expand((s) => s.photos).every((p) => p.isLiveStory(DateTime.now())), isTrue);
+
+      final form = FormData()..files.add(MapEntry('imageFile', MultipartFile.fromBytes([1, 2, 3], filename: 'me.jpg')));
+      final res = await dio.post<dynamic>('/body-photos', data: form, queryParameters: {'isPublic': false, 'asStory': true});
+      final story = BodyPhoto.fromJson((res.data as Map)['result'] as Map<String, dynamic>);
+      expect(story.isPublic, isTrue);
+      expect(story.isStory, isTrue);
+      expect(story.workoutHistoryId, isNull);
+      expect(story.storyUntil!.difference(story.takenAt), const Duration(hours: 24));
+
+      final after = await stories();
+      expect(after.first.user.username, 'mousty');
+      expect(after.first.photos.map((p) => p.id), [story.id]);
+
+      await dio.patch<dynamic>('/body-photos/${story.id}/visibility', data: {'isPublic': false});
+      expect((await stories()).map((s) => s.user.username), isNot(contains('mousty')));
+      expect((await month('mousty')).map((p) => p.id), contains(story.id), reason: 'resta nel calendario');
+      await dio.delete<dynamic>('/body-photos/${story.id}');
+    });
   });
 
   testWidgets('calendario: le foto stanno sul loro giorno e con due foto si può confrontare', (tester) async {
