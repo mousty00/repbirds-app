@@ -1,8 +1,8 @@
 name: CI
 
+# I push su main li costruisce test-build.yml (build per lo staging con build
+# number automatico), qui restano le PR.
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
