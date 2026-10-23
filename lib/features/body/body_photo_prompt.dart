@@ -7,6 +7,7 @@ import '../../core/network/api_exception.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ui.dart';
 import '../../data/body_photo_repository.dart';
+import 'photo_editor.dart';
 
 /// Foto del fisico per il calendario del profilo: dopo un allenamento
 /// ([workoutHistoryId]) o quando vuoi, dal profilo o dalla barra delle storie.
@@ -42,11 +43,16 @@ class _BodyPhotoSheetState extends ConsumerState<_BodyPhotoSheet> {
   Future<void> _pick(ImageSource source) async {
     final file = await ImagePicker().pickImage(source: source, maxWidth: 2000, imageQuality: 85);
     if (file == null || !mounted) return;
+    // prima di pubblicarla si può ritagliare, ruotare, aggiungere un filtro o un testo
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+    final edited = await showPhotoEditor(context, bytes, done: _story ? tr('Pubblica') : tr('Salva'));
+    if (edited == null || !mounted) return;
     setState(() => _saving = true);
     try {
       await ref.read(bodyPhotoRepositoryProvider).upload(
-            imageBytes: await file.readAsBytes(),
-            imageName: file.name,
+            imageBytes: edited,
+            imageName: 'body.jpg',
             isPublic: _public || _story,
             asStory: _story,
             workoutHistoryId: widget.workoutHistoryId,

@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../mock/mock_backend.dart';
 import '../theme/app_theme.dart';
@@ -18,6 +20,19 @@ class AppImage extends StatelessWidget {
   static bool supports(String? src) =>
       src != null &&
       (src.startsWith('http') || src.startsWith('asset:') || src.startsWith(MockBackend.uploadScheme));
+
+  /// I byte dell'immagine [src] (per modificarla), o null se non si riesce a leggerla.
+  static Future<Uint8List?> load(String src) async {
+    try {
+      if (src.startsWith('asset:')) return (await rootBundle.load(src.substring(6))).buffer.asUint8List();
+      if (src.startsWith(MockBackend.uploadScheme)) return MockBackend.uploads[src.substring(MockBackend.uploadScheme.length)];
+      // URL già firmato: niente token né base URL dell'API
+      final res = await Dio().get<List<int>>(src, options: Options(responseType: ResponseType.bytes));
+      return res.data == null ? null : Uint8List.fromList(res.data!);
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
