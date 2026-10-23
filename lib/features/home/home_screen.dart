@@ -6,14 +6,16 @@ import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/ui.dart';
+import '../../data/body_photo_repository.dart';
 import '../../data/providers.dart';
 import '../../models/group.dart';
 import '../../models/workout.dart';
 import '../auth/session.dart';
+import '../body/stories.dart';
 import '../shell/app_shell.dart';
 import 'upcoming.dart';
 
-/// Tab Oggi: una card grande con la cosa da fare adesso, tre numeri della
+/// Tab Oggi: le storie degli amici, una card grande con la cosa da fare adesso, tre numeri della
 /// settimana e, sotto, inviti e sessioni in programma con gli altri.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -25,6 +27,7 @@ class HomeScreen extends ConsumerWidget {
     ref.invalidate(friendRequestsProvider);
     ref.invalidate(groupInvitesProvider);
     ref.invalidate(runEventsProvider);
+    ref.invalidate(bodyStoriesProvider);
     await ref.read(historyProvider.future).catchError((_) => <WorkoutHistory>[]);
   }
 
@@ -77,10 +80,19 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              const _Now(),
-              const SizedBox(height: 14),
-              const _WeekTiles(),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const StoriesBar(),
+              const SizedBox(height: 12),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    _Now(),
+                    SizedBox(height: 14),
+                    _WeekTiles(),
                   ],
                 ),
               ),

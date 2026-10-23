@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ui.dart';
+import '../body/body_photo_prompt.dart';
 import '../exercises/exercises_screen.dart';
 
 /// Il "+" al centro della barra: scegli cosa creare.
@@ -14,6 +15,7 @@ void showCreateSheet(BuildContext context) {
     (Icons.route_rounded, tr('Percorso'), AppColors.mint, () => context.push('/running/route/new')),
     (Icons.groups_rounded, tr('Gruppo'), AppColors.amber, () => context.push('/group/new')),
     (Icons.photo_camera_rounded, tr('Post'), AppColors.danger, () => context.push('/posts/new')),
+    (Icons.accessibility_new_rounded, tr('Foto del fisico'), AppColors.pink, () => showBodyPhotoPrompt(context)),
   ];
   showModalBottomSheet<void>(
     context: context,

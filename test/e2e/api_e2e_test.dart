@@ -182,11 +182,16 @@ void main() {
   });
 
   group('esercizi e schede', () {
-    test('crea esercizi e li ritrova in libreria', () async {
+    test('crea esercizi: nei miei subito, negli altri solo dopo averli salvati', () async {
       squat = await a.workouts.createExercise(name: 'Squat $run', muscleGroup: 'Gambe');
       bench = await a.workouts.createExercise(name: 'Panca $run', muscleGroup: 'Petto', description: 'Bilanciere');
-      final list = await b.workouts.exercises();
-      expect(list.map((e) => e.id), containsAll([squat.id, bench.id]));
+      expect((await a.workouts.exercises()).map((e) => e.id), containsAll([squat.id, bench.id]));
+      expect((await b.workouts.exercises()).map((e) => e.id), isNot(contains(squat.id)));
+
+      await b.workouts.saveExercise(squat.id);
+      expect((await b.workouts.exercises()).map((e) => e.id), contains(squat.id));
+      await b.workouts.unsaveExercise(squat.id);
+      expect((await b.workouts.exercises()).map((e) => e.id), isNot(contains(squat.id)));
     });
 
     test('crea scheda, aggiunge, modifica e rimuove esercizi', () async {

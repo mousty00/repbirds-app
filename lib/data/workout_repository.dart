@@ -51,7 +51,7 @@ class WorkoutRepository {
 
   Future<void> removeExercise(String id) => _api.delete<dynamic>('/workout-exercises/delete/$id');
 
-  // Libreria esercizi
+  // Libreria esercizi: i miei e quelli che ho salvato da altri
 
   Future<List<Exercise>> exercises() async {
     final res = await _api.get<Json>('/exercises', query: {'page': 0, 'size': 100, 'sort': 'name'});
@@ -74,6 +74,12 @@ class WorkoutRepository {
   }
 
   Future<void> deleteExercise(String id) => _api.delete<dynamic>('/exercises/delete/$id');
+
+  /// Mette nella mia lista l'esercizio pubblico di un altro.
+  Future<void> saveExercise(String id) => _api.post<dynamic>('/exercises/$id/save');
+
+  /// Toglie dalla mia lista un esercizio salvato; le schede che lo usano lo tengono.
+  Future<void> unsaveExercise(String id) => _api.delete<dynamic>('/exercises/$id/save');
 
   // Storico
 

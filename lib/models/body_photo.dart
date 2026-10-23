@@ -1,7 +1,10 @@
 import 'json.dart';
+import 'user.dart';
 
 /// Foto del fisico nel calendario del profilo (`/body-photos`). Privata di
-/// default: la vede solo chi l'ha scattata; se pubblica la vedono tutti.
+/// default: la vede solo chi l'ha scattata; se pubblica la vedono tutti. Se
+/// postata come storia è pubblica e per 24 ore compare agli amici nella barra
+/// delle storie; poi resta nel calendario.
 class BodyPhoto {
   const BodyPhoto({
     required this.id,
@@ -10,6 +13,8 @@ class BodyPhoto {
     required this.takenAt,
     this.workoutHistoryId,
     this.workoutName,
+    this.isStory = false,
+    this.storyUntil,
   });
 
   final String id;
@@ -21,6 +26,14 @@ class BodyPhoto {
   /// Scheda dell'allenamento dopo cui è stata scattata, se c'è.
   final String? workoutName;
 
+  final bool isStory;
+
+  /// Quando la storia esce dalla barra degli amici (null se non è una storia).
+  final DateTime? storyUntil;
+
+  /// Ancora nella barra delle storie.
+  bool isLiveStory(DateTime now) => isStory && isPublic && storyUntil != null && storyUntil!.isAfter(now);
+
   factory BodyPhoto.fromJson(Json j) => BodyPhoto(
         id: '${j['id']}',
         imageUrl: j['imageUrl'] as String?,
@@ -28,15 +41,32 @@ class BodyPhoto {
         takenAt: parseInstant(j['takenAt']) ?? DateTime.now(),
         workoutHistoryId: j['workoutHistoryId']?.toString(),
         workoutName: j['workoutName'] as String?,
+        isStory: j['isStory'] == true,
+        storyUntil: parseInstant(j['storyUntil']),
       );
 
-  BodyPhoto copyWith({bool? isPublic}) => BodyPhoto(
+  BodyPhoto copyWith({bool? isPublic, bool? isStory}) => BodyPhoto(
         id: id,
         imageUrl: imageUrl,
         isPublic: isPublic ?? this.isPublic,
         takenAt: takenAt,
         workoutHistoryId: workoutHistoryId,
         workoutName: workoutName,
+        isStory: isStory ?? this.isStory,
+        storyUntil: storyUntil,
+      );
+}
+
+/// Le storie ancora attive di un utente (`/body-photos/stories`), dalla più vecchia.
+class BodyStories {
+  const BodyStories({required this.user, required this.photos});
+
+  final SimpleUser user;
+  final List<BodyPhoto> photos;
+
+  factory BodyStories.fromJson(Json j) => BodyStories(
+        user: SimpleUser.fromJson(Map<String, dynamic>.from(j['user'] as Map)),
+        photos: parseList(j['photos'], BodyPhoto.fromJson),
       );
 }
 

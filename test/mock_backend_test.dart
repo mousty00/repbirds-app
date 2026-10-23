@@ -237,6 +237,22 @@ void main() {
     expect(stranger.training, isNull);
     expect(stranger.routes, isNull);
   });
+  test('esercizi: i miei e i salvati; quelli pubblici degli altri solo nel loro profilo finché non li salvo', () async {
+    Future<List<String>> mine() async =>
+        [for (final e in ((await get('/exercises') as Map)['results'] as List)) '${(e as Map)['id']}'];
+    final giulia = UserOverview.fromJson(await get('/users/username/giulia.fit/overview') as Map<String, dynamic>);
+    final notSaved = giulia.exercises.firstWhere((e) => !e.saved);
+    expect(await mine(), isNot(contains(notSaved.id)));
+
+    await dio.post<dynamic>('/exercises/${notSaved.id}/save');
+    expect(await mine(), contains(notSaved.id));
+    final again = UserOverview.fromJson(await get('/users/username/giulia.fit/overview') as Map<String, dynamic>);
+    expect(again.exercises.firstWhere((e) => e.id == notSaved.id).saved, isTrue);
+
+    await dio.delete<dynamic>('/exercises/${notSaved.id}/save');
+    expect(await mine(), isNot(contains(notSaved.id)));
+  });
+
   test('richiesta inviata: si vede tra le inviate e si può ritirare', () async {
     await post('/friendship/create', null, {'friendUsername': 'luca.cali'});
     final sent = (await get('/friendship/sent') as List).map((e) => Friendship.fromJson(e as Map<String, dynamic>)).toList();

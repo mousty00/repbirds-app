@@ -3,16 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
+import '../../core/network/api_exception.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_image.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/backgrounds.dart';
 import '../../core/widgets/ui.dart';
+import '../../data/body_photo_repository.dart';
 import '../../data/providers.dart';
+import '../../data/workout_repository.dart';
 import '../../models/social.dart';
 import '../../models/user.dart';
+import '../../models/workout.dart' show muscleGroupLabel;
 import '../auth/session.dart';
 import '../body/body_calendar.dart';
+import '../body/stories.dart';
 import '../feed/moderation.dart';
 import '../share/share_actions.dart';
 import 'friends_screen.dart';
@@ -40,6 +45,7 @@ class UserProfileScreen extends ConsumerWidget {
     final user = ref.watch(userProfileProvider(username));
     final posts = ref.watch(userPostsProvider(username));
     final overview = ref.watch(userOverviewProvider(username)).value;
+    final stories = (ref.watch(bodyStoriesProvider).value ?? const []).where((s) => s.user.username == username).toList();
     final isFriend = (ref.watch(friendsProvider).value ?? const <Friendship>[])
         .any((f) => f.other(me.username).username == username);
 
@@ -75,7 +81,11 @@ class UserProfileScreen extends ConsumerWidget {
                   data: (u) => ListView(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                     children: [
-                      ProfileHeader(user: u),
+                      ProfileHeader(
+                        user: u,
+                        // la sua storia di oggi: tocca la foto per vederla
+                        onAvatarTap: stories.isEmpty ? null : () => showStoryViewer(context, stories: stories, initial: 0),
+                      ),
                       const SizedBox(height: 20),
                       if (isFriend)
                         Center(child: Tag(tr('Siete amici'), color: AppColors.mint, icon: Icons.check_rounded))
@@ -85,6 +95,7 @@ class UserProfileScreen extends ConsumerWidget {
                       const SizedBox(height: 24),
                       ProfileTabs(
                         overview: overview,
+                        canSaveExercises: true,
                         calendar: BodyCalendar(username: u.username, mine: u.username == me.username),
                         posts: AsyncView<List<Post>>(
                           value: posts,
@@ -107,10 +118,13 @@ class UserProfileScreen extends ConsumerWidget {
 
 /// Avatar grande, nome e username centrati.
 class ProfileHeader extends StatelessWidget {
-  const ProfileHeader({super.key, required this.user, this.onEditAvatar});
+  const ProfileHeader({super.key, required this.user, this.onEditAvatar, this.onAvatarTap});
 
   final User user;
   final VoidCallback? onEditAvatar;
+
+  /// Se c'è una storia da vedere: l'anello diventa colorato.
+  final VoidCallback? onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +133,24 @@ class ProfileHeader extends StatelessWidget {
       children: [
         Stack(
           children: [
-            UserAvatar(username: user.username, imageUrl: user.image, size: 112, ring: true),
+            if (onAvatarTap != null)
+              Semantics(
+                button: true,
+                label: tr('Guarda la storia'),
+                child: GestureDetector(
+                  onTap: onAvatarTap,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(colors: [AppColors.pink, AppColors.brand, AppColors.blue]),
+                    ),
+                    child: UserAvatar(username: user.username, imageUrl: user.image, size: 106, ring: true),
+                  ),
+                ),
+              )
+            else
+              UserAvatar(username: user.username, imageUrl: user.image, size: 112, ring: true),
             if (onEditAvatar != null)
               Positioned(
                 right: 0,
@@ -295,9 +326,18 @@ class _Overview extends StatelessWidget {
 
 /// Schede in alto: Post (aperta di base), Schede, Percorsi (solo agli amici), Esercizi e Calendario del fisico.
 class ProfileTabs extends StatefulWidget {
-  const ProfileTabs({super.key, required this.overview, required this.posts, required this.calendar});
+  const ProfileTabs({
+    super.key,
+    required this.overview,
+    required this.posts,
+    required this.calendar,
+    this.canSaveExercises = false,
+  });
 
   final UserOverview? overview;
+
+  /// Sul profilo di un altro: ogni esercizio pubblico si può salvare nei miei.
+  final bool canSaveExercises;
   final Widget posts;
   final Widget calendar;
 
@@ -346,8 +386,14 @@ class _ProfileTabsState extends State<ProfileTabs> {
         tr('Esercizi'),
         Icons.sports_gymnastics_rounded,
         () => _list([
-              for (final e in o?.exercises ?? const <({String id, String name, String muscleGroup})>[])
-                _Item(icon: Icons.sports_gymnastics_rounded, color: AppColors.lilac, title: e.name, subtitle: e.muscleGroup),
+              for (final e in o?.exercises ?? const <({String id, String name, String muscleGroup, bool saved})>[])
+                _Item(
+                  icon: Icons.sports_gymnastics_rounded,
+                  color: AppColors.lilac,
+                  title: e.name,
+                  subtitle: muscleGroupLabel(e.muscleGroup),
+                  trailing: widget.canSaveExercises ? SaveExerciseButton(exerciseId: e.id, saved: e.saved) : null,
+                ),
             ], tr('Nessun esercizio pubblico')),
       ),
       (tr('Calendario'), Icons.calendar_month_rounded, () => widget.calendar),
@@ -377,13 +423,14 @@ class _ProfileTabsState extends State<ProfileTabs> {
 }
 
 class _Item extends StatelessWidget {
-  const _Item({required this.icon, required this.color, required this.title, this.subtitle, this.onTap});
+  const _Item({required this.icon, required this.color, required this.title, this.subtitle, this.onTap, this.trailing});
 
   final IconData icon;
   final Color color;
   final String title;
   final String? subtitle;
   final VoidCallback? onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -406,9 +453,61 @@ class _Item extends StatelessWidget {
                   ],
                 ),
               ),
+              ?trailing,
               if (onTap != null) Icon(Icons.chevron_right_rounded, color: AppColors.muted),
             ],
           ),
         ),
+      );
+}
+
+/// Segnalibro sull'esercizio pubblico di un altro: lo salva nei miei esercizi
+/// (e da lì nelle mie schede) o lo toglie.
+class SaveExerciseButton extends ConsumerStatefulWidget {
+  const SaveExerciseButton({super.key, required this.exerciseId, required this.saved});
+
+  final String exerciseId;
+  final bool saved;
+
+  @override
+  ConsumerState<SaveExerciseButton> createState() => _SaveExerciseButtonState();
+}
+
+class _SaveExerciseButtonState extends ConsumerState<SaveExerciseButton> {
+  late bool _saved = widget.saved;
+  bool _busy = false;
+
+  @override
+  void didUpdateWidget(SaveExerciseButton old) {
+    super.didUpdateWidget(old);
+    if (old.saved != widget.saved) _saved = widget.saved;
+  }
+
+  Future<void> _toggle() async {
+    setState(() => _busy = true);
+    final repo = ref.read(workoutRepositoryProvider);
+    try {
+      if (_saved) {
+        await repo.unsaveExercise(widget.exerciseId);
+      } else {
+        await repo.saveExercise(widget.exerciseId);
+      }
+      if (!mounted) return;
+      setState(() => _saved = !_saved);
+      ref.invalidate(exercisesProvider);
+      showMessage(context, _saved ? tr('Salvato nei tuoi esercizi') : tr('Tolto dai tuoi esercizi'));
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+        tooltip: _saved ? tr('Togli dai miei esercizi') : tr('Salva nei miei esercizi'),
+        onPressed: _busy ? null : _toggle,
+        icon: Icon(_saved ? Icons.bookmark_rounded : Icons.bookmark_add_outlined,
+            color: _saved ? AppColors.lilac : AppColors.inkSoft),
       );
 }

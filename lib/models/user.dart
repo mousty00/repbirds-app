@@ -86,7 +86,8 @@ class UserOverview {
   final List<DateTime>? recentActivity;
   final List<SimpleUser> mutualFriends;
   final List<({String id, String name, int exercises})> workouts;
-  final List<({String id, String name, String muscleGroup})> exercises;
+  /// Esercizi pubblici; [saved]: ce l'ho già nei miei esercizi.
+  final List<({String id, String name, String muscleGroup, bool saved})> exercises;
   final List<({String id, String name, int? distanceM})>? routes;
 
   factory UserOverview.fromJson(Json j) {
@@ -101,7 +102,8 @@ class UserOverview {
         for (final w in list('workouts')) (id: '${w['id']}', name: '${w['name']}', exercises: (w['exercises'] as num?)?.toInt() ?? 0),
       ],
       exercises: [
-        for (final e in list('exercises')) (id: '${e['id']}', name: '${e['name']}', muscleGroup: '${e['muscleGroup'] ?? ''}'),
+        for (final e in list('exercises'))
+          (id: '${e['id']}', name: '${e['name']}', muscleGroup: '${e['muscleGroup'] ?? ''}', saved: e['saved'] == true),
       ],
       routes: j['routes'] == null
           ? null

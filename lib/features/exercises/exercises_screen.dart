@@ -12,7 +12,9 @@ import '../../models/workout.dart';
 import '../auth/session.dart';
 import '../../core/widgets/skeleton.dart';
 
-/// Libreria esercizi: pubblici + creati da me, filtrabili per gruppo muscolare.
+/// I miei esercizi: creati da me più quelli salvati dal profilo di altri,
+/// filtrabili per gruppo muscolare. Gli esercizi pubblici degli altri non
+/// compaiono qui finché non li salvi.
 class ExercisesScreen extends ConsumerStatefulWidget {
   const ExercisesScreen({super.key, this.title});
 
@@ -31,6 +33,21 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     if (!await confirm(context, title: tr('Eliminare "{name}"?', {'name': e.name}), ok: tr('Elimina'), destructive: true)) return;
     try {
       await ref.read(workoutRepositoryProvider).deleteExercise(e.id);
+      ref.invalidate(exercisesProvider);
+    } on ApiException catch (err) {
+      if (mounted) showMessage(context, err.message, error: true);
+    }
+  }
+
+  Future<void> _unsave(Exercise e) async {
+    if (!await confirm(context,
+        title: tr('Togliere "{name}" dai tuoi esercizi?', {'name': e.name}),
+        message: tr('Le schede che lo usano lo tengono.'),
+        ok: tr('Togli'))) {
+      return;
+    }
+    try {
+      await ref.read(workoutRepositoryProvider).unsaveExercise(e.id);
       ref.invalidate(exercisesProvider);
     } on ApiException catch (err) {
       if (mounted) showMessage(context, err.message, error: true);
@@ -102,7 +119,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                         EmptyState(
                           icon: Icons.fitness_center_rounded,
                           title: tr('Nessun esercizio'),
-                          message: tr('Crea un esercizio personalizzato da usare nelle tue schede.'),
+                          message: tr('Crea un esercizio personalizzato da usare nelle tue schede, o salvane uno dal profilo di un amico.'),
                           action: tr('Crea esercizio'),
                           onAction: () => showCreateExerciseSheet(context),
                         ),
@@ -128,7 +145,11 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                                   children: [
                                     Text(e.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                                     Text(
-                                      [muscleGroupLabel(e.muscleGroup), if (e.description?.isNotEmpty == true) e.description!].join(' · '),
+                                      [
+                                        muscleGroupLabel(e.muscleGroup),
+                                        if (!mine && e.createdBy != null) tr('di @{username}', {'username': e.createdBy}),
+                                        if (e.description?.isNotEmpty == true) e.description!,
+                                      ].join(' · '),
                                       style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -136,11 +157,17 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                                   ],
                                 ),
                               ),
-                              if (!e.isPublic) Tag(tr('Privato'), color: AppColors.inkSoft),
+                              if (mine && !e.isPublic) Tag(tr('Privato'), color: AppColors.inkSoft),
                               if (mine)
                                 IconButton(
                                   icon: Icon(Icons.delete_outline_rounded, color: AppColors.muted),
                                   onPressed: () => _delete(e),
+                                )
+                              else
+                                IconButton(
+                                  tooltip: tr('Togli dai miei esercizi'),
+                                  icon: const Icon(Icons.bookmark_rounded, color: AppColors.lilac),
+                                  onPressed: () => _unsave(e),
                                 ),
                             ],
                           ),
@@ -263,7 +290,7 @@ class _CreateExerciseSheetState extends ConsumerState<_CreateExerciseSheet> {
               value: _public,
               onChanged: (v) => setState(() => _public = v),
               title: Text(tr('Visibile a tutti'), style: const TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text(tr('Gli altri utenti potranno usarlo nelle loro schede')),
+              subtitle: Text(tr('Lo vedono nel tuo profilo e possono salvarlo nei loro esercizi')),
             ),
             const SizedBox(height: 12),
             PrimaryButton(label: tr('Crea esercizio'), loading: _loading, onPressed: _save),
