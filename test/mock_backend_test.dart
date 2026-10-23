@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/mock/mock_backend.dart';
-import 'package:gymbro_app/models/group.dart';
-import 'package:gymbro_app/models/notification.dart';
-import 'package:gymbro_app/models/page.dart';
-import 'package:gymbro_app/models/running.dart';
-import 'package:gymbro_app/models/social.dart';
-import 'package:gymbro_app/models/user.dart';
-import 'package:gymbro_app/models/workout.dart';
+import 'package:repbirds_app/core/mock/mock_backend.dart';
+import 'package:repbirds_app/models/group.dart';
+import 'package:repbirds_app/models/notification.dart';
+import 'package:repbirds_app/models/page.dart';
+import 'package:repbirds_app/models/running.dart';
+import 'package:repbirds_app/models/social.dart';
+import 'package:repbirds_app/models/user.dart';
+import 'package:repbirds_app/models/workout.dart';
 
 void main() {
   late Dio dio;

@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:gymbro_app/core/config/env.dart';
-import 'package:gymbro_app/features/auth/session.dart';
-import 'package:gymbro_app/features/profile/edit_profile_screen.dart';
-import 'package:gymbro_app/models/user.dart';
+import 'package:repbirds_app/core/config/env.dart';
+import 'package:repbirds_app/features/auth/session.dart';
+import 'package:repbirds_app/features/profile/edit_profile_screen.dart';
+import 'package:repbirds_app/models/user.dart';
 
 void main() {
   setUpAll(() => initializeDateFormatting());

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/features/running/geo.dart';
-import 'package:gymbro_app/features/running/run_recorder.dart';
+import 'package:repbirds_app/features/running/geo.dart';
+import 'package:repbirds_app/features/running/run_recorder.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {

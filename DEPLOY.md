@@ -2,7 +2,7 @@
 
 How to build RepBirds for release and publish it on the App Store and Google Play.
 
-The app talks to [gymbro-api](https://github.com/mousty00/gymbro-api); deploy that first (see
+The app talks to [repbirds-api](https://github.com/mousty00/repbirds-api); deploy that first (see
 its `DEPLOY.md`) so you have an HTTPS base URL like `https://api.<domain>/api`.
 
 | | iOS | Android |

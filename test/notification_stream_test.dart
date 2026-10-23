@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/widgets/ui.dart';
-import 'package:gymbro_app/data/notification_stream.dart';
+import 'package:repbirds_app/core/widgets/ui.dart';
+import 'package:repbirds_app/data/notification_stream.dart';
 
 void main() {
   test('SSE: eventi con nome e dati, commenti scartati, anche se spezzati a metà', () async {

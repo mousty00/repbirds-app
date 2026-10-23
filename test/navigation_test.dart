@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:gymbro_app/features/shell/app_shell.dart';
+import 'package:repbirds_app/features/shell/app_shell.dart';
 
 void main() {
   GoRouter router() => GoRouter(

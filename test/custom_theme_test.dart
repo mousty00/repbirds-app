@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymbro_app/core/theme/theme_mode.dart';
+import 'package:repbirds_app/core/theme/theme_mode.dart';
 
 void main() {
   test('un tema personalizzato si salva, si rilegge e vince sulla scelta chiaro/scuro', () {

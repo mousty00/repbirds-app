@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:gymbro_app/core/mock/mock_backend.dart';
-import 'package:gymbro_app/data/body_photo_repository.dart';
-import 'package:gymbro_app/features/body/body_calendar.dart';
-import 'package:gymbro_app/models/body_photo.dart';
-import 'package:gymbro_app/models/notification.dart';
+import 'package:repbirds_app/core/mock/mock_backend.dart';
+import 'package:repbirds_app/data/body_photo_repository.dart';
+import 'package:repbirds_app/features/body/body_calendar.dart';
+import 'package:repbirds_app/models/body_photo.dart';
+import 'package:repbirds_app/models/notification.dart';
 
 void main() {
   setUpAll(() => initializeDateFormatting());
