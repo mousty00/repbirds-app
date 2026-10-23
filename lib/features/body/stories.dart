@@ -308,9 +308,9 @@ class _StoryViewerState extends ConsumerState<StoryViewer> with SingleTickerProv
       });
       showMessage(context, tr('Storia aggiornata'));
       _timer.forward(from: 0);
-    } on ApiException catch (e) {
+    } catch (e) {
       if (mounted) {
-        showMessage(context, e.message, error: true);
+        showMessage(context, e is ApiException ? e.message : tr('Qualcosa è andato storto. Riprova.'), error: true);
         setState(() => _busy = false);
         _timer.forward();
       }

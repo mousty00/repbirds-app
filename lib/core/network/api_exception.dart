@@ -18,6 +18,12 @@ class ApiException implements Exception {
   bool get isEmailNotVerified =>
       statusCode == 403 && message.toLowerCase().contains('not verified');
 
+  /// Un caricamento che non è finito in tempo (rete lenta o server che non risponde).
+  factory ApiException.uploadTimeout() => ApiException(
+        tr('Il caricamento ci sta mettendo troppo. Controlla la connessione e riprova.'),
+        unreachable: true,
+      );
+
   factory ApiException.fromDio(Object error) {
     if (error is ApiException) return error;
     if (error is! DioException) {
@@ -45,7 +51,9 @@ class ApiException implements Exception {
       message = details.values.join('\n');
     }
     final status = response.statusCode ?? 0;
-    if (status == 429) {
+    if (status == 413) {
+      message = tr('Il file è troppo grande.');
+    } else if (status == 429) {
       // rate limit sulle rotte /auth (20 richieste al minuto per IP)
       message = tr('Troppi tentativi. Aspetta un minuto e riprova.');
     } else if (status >= 500 && details.isEmpty) {
