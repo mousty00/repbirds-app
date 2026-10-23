@@ -152,8 +152,18 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain"
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
 
+          # La chiave .p8 può arrivare come file intero, su una riga sola, con "\n"
+          # letterali o in base64: si tiene solo il corpo e si ricostruisce il PEM.
+          body=$(printf '%s' "$ASC_KEY_P8" | sed 's/\\n/ /g; s/-----[A-Z ]*-----//g' | tr -d ' \t\r\n')
+          decoded=$(printf '%s' "$body" | base64 --decode 2>/dev/null | tr -d '\0' || true)
+          if [[ "$decoded" == *"BEGIN PRIVATE KEY"* ]]; then
+            body=$(printf '%s' "$decoded" | sed 's/-----[A-Z ]*-----//g' | tr -d ' \t\r\n')
+          fi
+          key_file=~/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8
+          { echo "-----BEGIN PRIVATE KEY-----"; printf '%s' "$body" | fold -w 64; echo; echo "-----END PRIVATE KEY-----"; } > "$key_file"
+          openssl pkey -in "$key_file" -noout \
+            || { echo "::error::APP_STORE_CONNECT_KEY_P8 non è una chiave .p8 valida"; exit 1; }
 
       - name: Build IPA
         if: env.CERTIFICATE_BASE64 != '' && env.ASC_KEY_ID != ''

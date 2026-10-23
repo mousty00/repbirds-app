@@ -306,7 +306,7 @@ without them the workflow still builds, debug-signed on Android and unsigned (no
 | `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | the values of `key.properties` |
 | `IOS_CERTIFICATE_P12_BASE64` | your **Apple Development** and **Apple Distribution** certificates with their private keys, exported together from Keychain Access as one `.p12`: `base64 -i certs.p12 \| pbcopy` |
 | `IOS_CERTIFICATE_PASSWORD` | the password chosen when exporting the `.p12` |
-| `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_P8` | an App Store Connect API key with the **Admin** role (Users and Access → Integrations → App Store Connect API); the `.p8` content goes in as text. Xcode uses it to create and refresh the provisioning profiles of the app and of the widget extension |
+| `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_P8` | an App Store Connect API key with the **Admin** role (Users and Access → Integrations → App Store Connect API); paste the whole `.p8` file, header lines included (or `base64 -i AuthKey_XXX.p8 \| pbcopy`). Xcode uses it to create and refresh the provisioning profiles of the app and of the widget extension |
 
 Set the repository **variable** `TESTFLIGHT_UPLOAD` to `true` to also upload each IPA to
 TestFlight. The workflow doesn't upload anything to Google Play.
