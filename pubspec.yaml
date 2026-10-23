@@ -15,6 +15,7 @@ dependencies:
   go_router: ^18.0.2
   dio: ^5.11.1
   flutter_secure_storage: ^11.2.0
+  image: ^4.5.0
   image_picker: ^1.2.4
   intl: any
   google_fonts: ^8.2.1

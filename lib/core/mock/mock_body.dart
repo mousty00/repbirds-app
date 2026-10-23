@@ -103,6 +103,15 @@ extension _MockBody on MockBackend {
       }
       return view(p);
     }
+    if (match('PUT', '/body-photos/:id/image')) {
+      final p = mine(_idBeforeLast(o));
+      final bytes = await _fileFrom(o.data, 'imageFile');
+      if (bytes == null) throw _MockError(400, 'File is empty');
+      final key = _id('img');
+      MockBackend.uploads[key] = bytes;
+      p['imageUrl'] = '${MockBackend.uploadScheme}$key';
+      return view(p);
+    }
     if (match('DELETE', '/body-photos/:id')) {
       _bodyPhotos.remove(mine(last));
       return _ok('Photo deleted');

@@ -92,6 +92,28 @@ void main() {
       expect((await month('mousty')).map((p) => p.id), contains(story.id), reason: 'resta nel calendario');
       await dio.delete<dynamic>('/body-photos/${story.id}');
     });
+
+    test('la foto di una storia si sostituisce con quella modificata: stessa storia, stessa scadenza', () async {
+      final form = FormData()..files.add(MapEntry('imageFile', MultipartFile.fromBytes([1, 2, 3], filename: 'me.jpg')));
+      final res = await dio.post<dynamic>('/body-photos', data: form, queryParameters: {'asStory': true});
+      final story = BodyPhoto.fromJson((res.data as Map)['result'] as Map<String, dynamic>);
+
+      final edited = FormData()..files.add(MapEntry('imageFile', MultipartFile.fromBytes([4, 5, 6], filename: 'body.jpg')));
+      final updated = BodyPhoto.fromJson(
+          (await dio.put<dynamic>('/body-photos/${story.id}/image', data: edited)).data as Map<String, dynamic>);
+      expect(updated.id, story.id);
+      expect(updated.imageUrl, isNot(story.imageUrl));
+      expect(MockBackend.uploads[updated.imageUrl!.substring(MockBackend.uploadScheme.length)], [4, 5, 6]);
+      expect(updated.isStory, isTrue);
+      expect(updated.storyUntil, story.storyUntil);
+      expect((await stories()).first.photos.single.imageUrl, updated.imageUrl);
+
+      // quella di un altro non si tocca
+      final giulia = (await stories()).firstWhere((s) => s.user.username == 'giulia.fit').photos.first;
+      final again = FormData()..files.add(MapEntry('imageFile', MultipartFile.fromBytes([7], filename: 'x.jpg')));
+      await expectLater(dio.put<dynamic>('/body-photos/${giulia.id}/image', data: again), throwsA(isA<DioException>()));
+      await dio.delete<dynamic>('/body-photos/${story.id}');
+    });
   });
 
   testWidgets('calendario: le foto stanno sul loro giorno e con due foto si può confrontare', (tester) async {

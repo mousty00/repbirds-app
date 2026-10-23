@@ -16,6 +16,7 @@ import '../../data/body_photo_repository.dart';
 import '../../models/body_photo.dart';
 import '../auth/session.dart';
 import 'body_photo_prompt.dart';
+import 'photo_editor.dart';
 
 /// Le storie già guardate su questo telefono, per spegnere l'anello di chi non
 /// ha niente di nuovo. Bastano gli ultimi id: una storia dura 24 ore.
@@ -274,6 +275,48 @@ class _StoryViewerState extends ConsumerState<StoryViewer> with SingleTickerProv
     if (mounted) Navigator.of(context).pop();
   }
 
+  /// Riapre la mia storia nell'editor e ne sostituisce la foto: resta al suo posto e scade quando doveva.
+  Future<void> _edit() async {
+    _timer.stop();
+    setState(() => _busy = true);
+    final photo = _currentPhoto;
+    final bytes = photo.imageUrl == null ? null : await AppImage.load(photo.imageUrl!);
+    if (!mounted) return;
+    if (bytes == null) {
+      setState(() => _busy = false);
+      showMessage(context, tr('Non riesco ad aprire questa foto.'), error: true);
+      _timer.forward();
+      return;
+    }
+    final edited = await showPhotoEditor(context, bytes, done: tr('Salva'));
+    if (!mounted) return;
+    if (edited == null) {
+      setState(() => _busy = false);
+      _timer.forward();
+      return;
+    }
+    try {
+      final updated = await ref.read(bodyPhotoRepositoryProvider).replaceImage(photo.id, edited);
+      ref.invalidate(bodyStoriesProvider);
+      ref.invalidate(bodyPhotosProvider);
+      if (!mounted) return;
+      final photos = [..._current.photos];
+      photos[_photo] = updated;
+      setState(() {
+        _stories[_user] = BodyStories(user: _current.user, photos: photos);
+        _busy = false;
+      });
+      showMessage(context, tr('Storia aggiornata'));
+      _timer.forward(from: 0);
+    } on ApiException catch (e) {
+      if (mounted) {
+        showMessage(context, e.message, error: true);
+        setState(() => _busy = false);
+        _timer.forward();
+      }
+    }
+  }
+
   Future<void> _delete() async {
     _timer.stop();
     final ok = await confirm(context,
@@ -387,6 +430,13 @@ class _StoryViewerState extends ConsumerState<StoryViewer> with SingleTickerProv
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        if (mine)
+                          IconButton(
+                            tooltip: tr('Modifica'),
+                            color: Colors.white,
+                            icon: const Icon(Icons.edit_rounded),
+                            onPressed: _busy ? null : _edit,
+                          ),
                         if (mine)
                           IconButton(
                             tooltip: tr('Elimina'),

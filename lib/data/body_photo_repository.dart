@@ -46,6 +46,12 @@ class BodyPhotoRepository {
   Future<BodyPhoto> setVisibility(String id, bool isPublic) async =>
       BodyPhoto.fromJson(await _api.patch<Json>('/body-photos/$id/visibility', data: {'isPublic': isPublic}));
 
+  /// Sostituisce l'immagine di una mia foto con quella modificata; la storia resta com'era (e scade quando doveva).
+  Future<BodyPhoto> replaceImage(String id, List<int> imageBytes) async {
+    final form = FormData()..files.add(MapEntry('imageFile', MultipartFile.fromBytes(imageBytes, filename: 'body.jpg')));
+    return BodyPhoto.fromJson(await _api.put<Json>('/body-photos/$id/image', data: form));
+  }
+
   Future<void> delete(String id) => _api.delete<dynamic>('/body-photos/$id');
 }
 
