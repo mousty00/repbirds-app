@@ -115,6 +115,10 @@ class ApiClient {
   ) async {
     options.headers['Authorization'] = 'Bearer $token';
     options.extra[_retriedKey] = true;
+    // un FormData già inviato non si può rimandare ("already finalized"): ne serve una copia,
+    // altrimenti un upload con il token scaduto non arriva mai al server
+    final data = options.data;
+    if (data is FormData) options.data = data.clone();
     try {
       final response = await dio.fetch<dynamic>(options);
       handler.resolve(response);
@@ -130,17 +134,49 @@ class ApiClient {
   Future<T> get<T>(String path, {Map<String, dynamic>? query}) =>
       _wrap(() => dio.get<T>(path, queryParameters: query));
 
-  Future<T> post<T>(String path, {Object? data, Map<String, dynamic>? query}) =>
-      _wrap(() => dio.post<T>(path, data: data, queryParameters: query));
+  Future<T> post<T>(String path, {Object? data, Map<String, dynamic>? query}) => data is FormData
+      ? _upload('POST', path, data, query)
+      : _wrap(() => dio.post<T>(path, data: data, queryParameters: query));
 
-  Future<T> put<T>(String path, {Object? data, Map<String, dynamic>? query}) =>
-      _wrap(() => dio.put<T>(path, data: data, queryParameters: query));
+  Future<T> put<T>(String path, {Object? data, Map<String, dynamic>? query}) => data is FormData
+      ? _upload('PUT', path, data, query)
+      : _wrap(() => dio.put<T>(path, data: data, queryParameters: query));
 
   Future<T> patch<T>(String path, {Object? data, Map<String, dynamic>? query}) =>
       _wrap(() => dio.patch<T>(path, data: data, queryParameters: query));
 
   Future<T> delete<T>(String path, {Map<String, dynamic>? query}) =>
       _wrap(() => dio.delete<T>(path, queryParameters: query));
+
+  /// Tempo massimo di un caricamento (foto, storie, screenshot), invio e risposta compresi.
+  static const uploadTimeout = Duration(seconds: 60);
+
+  /// Caricamento multipart: senza un limite, su rete lenta o con il server che non
+  /// risponde l'invio può restare appeso per sempre (e con lui lo spinner). Allo scadere
+  /// la richiesta viene annullata e l'errore spiega cosa fare.
+  Future<T> _upload<T>(String method, String path, FormData data, Map<String, dynamic>? query) async {
+    final cancel = CancelToken();
+    final deadline = Timer(uploadTimeout, () => cancel.cancel('timeout'));
+    try {
+      final res = await dio.request<T>(
+        path,
+        data: data,
+        queryParameters: query,
+        cancelToken: cancel,
+        options: Options(method: method, sendTimeout: uploadTimeout, receiveTimeout: uploadTimeout),
+      );
+      return res.data as T;
+    } on DioException catch (e) {
+      final timedOut = cancel.isCancelled ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
+      throw timedOut ? ApiException.uploadTimeout() : ApiException.fromDio(e);
+    } catch (e) {
+      throw ApiException.fromDio(e);
+    } finally {
+      deadline.cancel();
+    }
+  }
 
   Future<T> _wrap<T>(Future<Response<T>> Function() call) async {
     try {

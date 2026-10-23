@@ -62,6 +62,9 @@ class _BodyPhotoSheetState extends ConsumerState<_BodyPhotoSheet> {
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);
+    } catch (_) {
+      // qualunque altro errore (risposta inattesa...) deve fermare lo spinner e dirlo
+      if (mounted) showMessage(context, tr('Qualcosa è andato storto. Riprova.'), error: true);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

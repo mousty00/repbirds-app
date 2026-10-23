@@ -5,6 +5,8 @@ const es = <String, String>{
   'Errore {code}': 'Error {code}',
   'Troppi tentativi. Aspetta un minuto e riprova.': 'Demasiados intentos. Espera un minuto y vuelve a intentarlo.',
   'Il server ha avuto un problema. Riprova tra poco.': 'El servidor tuvo un problema. Inténtalo de nuevo en un rato.',
+  'Il caricamento ci sta mettendo troppo. Controlla la connessione e riprova.': 'La subida está tardando demasiado. Revisa tu conexión y vuelve a intentarlo.',
+  'Il file è troppo grande.': 'El archivo es demasiado grande.',
   'Apri': 'Abrir',
   'adesso': 'ahora',
   '{n} min fa': 'hace {n} min',
