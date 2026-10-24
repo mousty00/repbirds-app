@@ -12,6 +12,11 @@
     <!-- Fine recupero puntuale con l'app in background (se l'utente lo concede, altrimenti
          la notifica può arrivare con un po' di ritardo) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Tessera palestra: il telefono fa da carta (HCE) e, alla reception, da lettore.
+         required=false: l'app resta installabile senza NFC, la tessera è anche un QR. -->
+    <uses-permission android:name="android.permission.NFC"/>
+    <uses-feature android:name="android.hardware.nfc" android:required="false"/>
+    <uses-feature android:name="android.hardware.nfc.hce" android:required="false"/>
     <application
         android:label="RepBirds"
         android:name="${applicationName}"
@@ -63,6 +68,18 @@
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
+        </service>
+        <!-- Tessera palestra via NFC: risponde al lettore della palestra (vedi GymCardApduService.kt) -->
+        <service
+            android:name=".GymCardApduService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/gym_card_apduservice"/>
         </service>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/gym/nfc_card.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/push/push_service.dart';
@@ -49,12 +50,15 @@ class SessionController extends AsyncNotifier<User?> {
   Future<void> logout() async {
     // prima del logout: serve ancora la sessione per cancellare il token push
     await ref.read(pushServiceProvider).onLogout();
+    // la tessera NFC non deve restare sul telefono di chi esce
+    await NfcCard.clearCard();
     await _repo.logout();
     state = const AsyncData(null);
   }
 
   /// Dopo l'eliminazione dell'account.
   Future<void> forget() async {
+    await NfcCard.clearCard();
     await _repo.clearSession();
     state = const AsyncData(null);
   }

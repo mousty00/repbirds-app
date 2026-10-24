@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tessera della palestra via NFC (GymCardApduService). requireDeviceUnlock=false:
+     basta lo schermo acceso, come un badge; il codice cambia ogni 30 secondi. -->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/gym_card_service"
+    android:requireDeviceUnlock="false">
+    <aid-group android:category="other" android:description="@string/gym_card_service">
+        <aid-filter android:name="F0524247594D31"/>
+    </aid-group>
+</host-apdu-service>

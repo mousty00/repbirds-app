@@ -16,6 +16,15 @@ import '../../features/friends/user_profile_screen.dart';
 import '../../features/groups/group_detail_screen.dart';
 import '../../features/groups/group_form_screen.dart';
 import '../../features/groups/group_session_screen.dart';
+import '../../features/gym/gym_courses_screen.dart';
+import '../../features/gym/gym_entrance_screen.dart';
+import '../../features/gym/gym_members_screen.dart';
+import '../../features/gym/gym_overview_screen.dart';
+import '../../features/gym/gym_plans_screen.dart';
+import '../../features/gym/gym_shell.dart';
+import '../../features/gym/gym_signup_screen.dart';
+import '../../features/gym/gym_workouts_screen.dart';
+import '../../features/membership/membership_screen.dart';
 import '../../features/help/help_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/onboarding/guide_screen.dart';
@@ -38,6 +47,7 @@ import '../../features/workouts/workout_detail_screen.dart';
 import '../../features/workouts/workout_form_screen.dart';
 import '../../features/workouts/workout_session_screen.dart';
 import '../../features/support/bug_report_screen.dart';
+import '../../data/gym_repository.dart';
 import '../../models/body_photo.dart';
 import '../../models/workout.dart';
 import '../widgets/ui.dart';
@@ -51,6 +61,13 @@ String? _pendingLocation;
 bool _isSharedLink(String loc) => [
       '/w/', '/workout/', '/u/', '/r/', '/running/route/', '/p/', '/posts/' //
     ].any(loc.startsWith);
+
+/// Dove può andare un account palestra fuori dalla dashboard: le sue schede (dettaglio,
+/// modifica, esercizi), le notifiche, l'aiuto e la segnalazione di un problema.
+bool _gymCanOpen(String loc) =>
+    loc.startsWith('/gym') ||
+    (loc.startsWith('/workout/') && !loc.endsWith('/session')) ||
+    ['/notifications', '/help', '/support/report'].contains(loc);
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
@@ -80,11 +97,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (_isSharedLink(loc)) _pendingLocation = state.uri.toString();
         return onPublic ? null : '/welcome';
       }
+      // Le palestre hanno la loro dashboard al posto delle tab; le persone non ci entrano.
+      final gym = isGymAccount(user.roleName);
       if (onPublic || loc == '/splash') {
         final next = _pendingLocation;
         _pendingLocation = null;
+        if (gym) return next != null && _gymCanOpen(next) ? next : '/gym';
         return next ?? '/home';
       }
+      if (gym && !_gymCanOpen(loc)) return '/gym';
+      if (!gym && loc.startsWith('/gym')) return '/home';
       return null;
     },
     // ContentWidth: su un pieghevole aperto o un tablet la pagina resta una colonna al centro.
@@ -104,6 +126,29 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/auth/forgot', builder: (_, _) => const ContentWidth(child: ForgotPasswordScreen())),
+      GoRoute(path: '/auth/signup/gym', builder: (_, _) => const ContentWidth(child: GymSignupScreen())),
+
+      // Dashboard della palestra (account palestra).
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => GymShell(shell: shell),
+        branches: [
+          StatefulShellBranch(routes: [GoRoute(path: '/gym', builder: (_, _) => const GymOverviewScreen())]),
+          StatefulShellBranch(routes: [GoRoute(path: '/gym/members', builder: (_, _) => const GymMembersScreen())]),
+          StatefulShellBranch(routes: [GoRoute(path: '/gym/plans', builder: (_, _) => const GymPlansScreen())]),
+          StatefulShellBranch(routes: [GoRoute(path: '/gym/workouts', builder: (_, _) => const GymWorkoutsScreen())]),
+          StatefulShellBranch(routes: [GoRoute(path: '/gym/courses', builder: (_, _) => const GymCoursesScreen())]),
+        ],
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gym/entrance',
+        builder: (_, _) => const GymEntranceScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gym/workouts/new',
+        builder: (_, _) => const ContentWidth(child: WorkoutFormScreen(gym: true)),
+      ),
 
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell: shell),
@@ -257,6 +302,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         path: '/running/runs/:id',
         builder: (_, s) => RunDetailScreen(runId: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/membership',
+        builder: (_, s) => ContentWidth(child: MembershipScreen(membershipId: s.uri.queryParameters['id'])),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,

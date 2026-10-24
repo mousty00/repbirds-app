@@ -183,6 +183,8 @@ class ActivityTile extends StatelessWidget {
         NotificationKind.routeSaved => Icons.bookmark_added_rounded,
         NotificationKind.workoutShared => Icons.fitness_center_rounded,
         NotificationKind.bodyPhotoMonthly => Icons.compare_rounded,
+        NotificationKind.gymMembershipActivated => Icons.badge_rounded,
+        NotificationKind.gymCourseEnrolled => Icons.event_rounded,
         _ => Icons.person_add_alt_1_rounded,
       };
 

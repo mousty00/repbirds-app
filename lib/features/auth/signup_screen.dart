@@ -180,6 +180,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         ),
         const SizedBox(height: 12),
         PrimaryButton(label: tr('Crea account'), loading: _loading, onPressed: _submit),
+        const SizedBox(height: 8),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => context.pushReplacement('/auth/signup/gym'),
+            icon: const Icon(Icons.storefront_rounded, size: 18),
+            label: Text(tr('Hai una palestra? Registrala qui')),
+          ),
+        ),
       ],
     );
   }

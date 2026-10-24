@@ -140,3 +140,16 @@ lib/
 - Chi è solo invitato non può leggere il gruppo: l'invito porta con sé nome, creatore e data (`groupName`, `groupCreatedBy`, `groupScheduledFor`, da repbirds-api PR #14). Con un backend più vecchio l'app mostra un testo generico.
 - Un commento lo può eliminare solo chi l'ha scritto, anche sui propri post.
 - Le rotte `/auth/**` hanno un rate limit di 20 richieste al minuto per IP: l'app mostra "Troppi tentativi" invece dell'errore 429.
+
+## Palestre e tessera
+
+Le palestre hanno un account loro (registrazione da "Hai una palestra? Registrala"): dopo il login l'app apre una dashboard al posto delle tab, con panoramica, iscritti, abbonamenti, schede, corsi e la schermata **Ingresso** per la reception. Su schermi larghi (tablet, web) la dashboard usa la barra laterale.
+
+- **Abbonamenti e iscritti**: la palestra crea gli abbonamenti che vende e li abilita su chi ha un account RepBirds (basta lo username). Può rinnovare, sospendere o togliere.
+- **Schede e corsi**: le schede della palestra le vedono solo gli iscritti con l'abbonamento attivo (mai in Esplora, niente condivisione). I corsi hanno giorni, orario e posti; gli iscritti si prenotano dall'app.
+- **Tessera**: con l'abbonamento attivo l'iscritto ha la tessera in app (`/membership`, e un riquadro in Home). Il codice cambia ogni 30 secondi ed è calcolato sul telefono (HMAC con un segreto della tessera, vedi `lib/core/gym/card_code.dart`), quindi funziona anche senza rete. Il server accetta un codice per circa 2 minuti.
+  - **Android**: il telefono fa da carta NFC (HCE, `GymCardApduService.kt`, AID `F0524247594D31`). Basta avvicinarlo al lettore con lo schermo acceso, anche con l'app chiusa.
+  - **iPhone**: Apple non permette alle app di emulare una carta NFC senza un entitlement speciale (solo SEE, con contratto), quindi la tessera è il QR.
+  - **Reception**: la schermata Ingresso legge il QR con la fotocamera e, su un telefono o tablet Android, anche le tessere NFC. I tornelli con lettore MIFARE classico non leggono l'HCE: serve un lettore che mandi il SELECT dell'AID, oppure un dispositivo Android alla reception.
+
+In modalità mock il login `palestra` entra come "Fit Club Milano"; qualunque altro login è `mousty`, iscritto con la tessera attiva.
