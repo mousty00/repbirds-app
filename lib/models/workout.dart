@@ -24,11 +24,17 @@ class Workout {
     this.createdAt,
     this.exercises = const [],
     this.history = const [],
+    this.gymId,
+    this.gymName,
   });
 
   final String id;
   final String name;
   final SimpleUser? user;
+
+  /// Scheda di una palestra per i suoi iscritti: non si condivide e non si porta nei gruppi.
+  final String? gymId;
+  final String? gymName;
   final String? description;
   final bool isPublic;
   final List<int> dayOfWeek;
@@ -54,6 +60,8 @@ class Workout {
       createdAt: parseInstant(j['createdAt']),
       exercises: exercises,
       history: parseList(j['workoutHistories'], WorkoutHistory.fromJson),
+      gymId: j['gymId']?.toString(),
+      gymName: j['gymName'] as String?,
     );
   }
 }

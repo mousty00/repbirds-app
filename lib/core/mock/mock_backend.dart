@@ -5,9 +5,13 @@ import 'package:dio/dio.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../features/running/geo.dart';
+import '../../models/gym.dart';
+import '../../models/json.dart';
 import '../config/env.dart';
+import '../gym/card_code.dart';
 
 part 'mock_body.dart';
+part 'mock_gym.dart';
 part 'mock_running.dart';
 
 /// Backend finto in memoria, attivo quando `Env.useMock` è vero
@@ -19,7 +23,8 @@ part 'mock_running.dart';
 /// valgono finché l'app resta aperta.
 ///
 /// Comportamenti utili per provare la UX:
-/// - qualunque username e password fanno il login come `mousty`;
+/// - qualunque username e password fanno il login come `mousty`, iscritto a una palestra;
+/// - lo username `palestra` entra come la palestra (dashboard, iscritti, ingresso);
 /// - lo username `nonverificato` simula l'email non verificata (403);
 /// - la password `sbagliata` simula credenziali errate (401);
 /// - il codice OTP `000000` è sempre rifiutato, gli altri sono accettati.
@@ -92,6 +97,15 @@ class MockBackend extends Interceptor {
   final _runEvents = <Map<String, dynamic>>[];
   final _runs = <Map<String, dynamic>>[];
   final _bodyPhotos = <Map<String, dynamic>>[];
+  late Map<String, dynamic> _gymUser;
+  late Map<String, dynamic> _gym;
+  final _gymPlans = <Map<String, dynamic>>[];
+  final _gymMembers = <Map<String, dynamic>>[];
+  final _gymCourses = <Map<String, dynamic>>[];
+  final _gymCheckIns = <Map<String, dynamic>>[];
+
+  /// Chi ha fatto il login: `mousty`, o la palestra con il login `palestra`.
+  late Map<String, dynamic> _account = _me;
   final devices = <String>{};
 
   static String _iso(DateTime d) => d.toUtc().toIso8601String();
@@ -313,6 +327,7 @@ class MockBackend extends Interceptor {
     ]);
     _seedRunning(giulia, marco, sara);
     _seedBody(giulia);
+    _seedGym(giulia, marco, sara);
     // come la migrazione del backend: gli esercizi di altri che uso già nelle mie schede
     for (final w in _workouts.where((w) => w['user']['username'] == _meName)) {
       for (final we in w['workoutExercises'] as List) {
@@ -501,7 +516,8 @@ class MockBackend extends Interceptor {
       if (username == 'nonverificato') {
         throw _MockError(403, 'Email not verified: check your inbox for the verification code');
       }
-      return {'message': 'login successful', 'result': _me, 'token': 'mock-token', 'refreshToken': 'mock-refresh'};
+      _account = username.toLowerCase() == _MockGym._gymUsername ? _gymUser : _me;
+      return {'message': 'login successful', 'result': _account, 'token': 'mock-token', 'refreshToken': 'mock-refresh'};
     }
     if (match('POST', '/auth/signup')) return _ok('Signup successful!');
     if (match('POST', '/auth/verify-otp')) {
@@ -513,7 +529,7 @@ class MockBackend extends Interceptor {
       if (body['otp'] == '000000') throw _MockError(400, 'Invalid OTP');
       return _ok('Password reset');
     }
-    if (match('GET', '/auth/profile')) return _me;
+    if (match('GET', '/auth/profile')) return _account;
     if (match('POST', '/auth/refresh')) {
       return {'message': 'ok', 'token': 'mock-token', 'refreshToken': 'mock-refresh'};
     }
@@ -952,6 +968,10 @@ class MockBackend extends Interceptor {
     // Foto del fisico
     final bodyPhotos = await _body(match, last, q, o, body);
     if (!identical(bodyPhotos, _unhandled)) return bodyPhotos;
+
+    // Palestre e tessere
+    final gym = _gymRoutes(match, seg, q, body);
+    if (!identical(gym, _unhandled)) return gym;
 
     // Corsa
     final running = _running(match, last, seg, body);

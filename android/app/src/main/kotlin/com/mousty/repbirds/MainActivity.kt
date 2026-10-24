@@ -3,6 +3,8 @@ package com.mousty.repbirds
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.nfc.NfcAdapter
+import android.nfc.tech.IsoDep
 import android.os.Build
 import android.os.Bundle
 import com.google.firebase.FirebaseApp
@@ -45,10 +47,83 @@ class MainActivity : FlutterActivity() {
             }
         }
         this.channel = channel
+        configureGymNfc(flutterEngine)
         PushMessagingService.listener = { method, arguments -> runOnUiThread { channel.invokeMethod(method, arguments) } }
     }
 
+    /**
+     * Gym card over NFC (`repbirds/gym_nfc`, see lib/core/gym/nfc_card.dart): stores the card
+     * for [GymCardApduService], and at the gym's reception reads other phones' cards in reader mode.
+     */
+    private fun configureGymNfc(flutterEngine: FlutterEngine) {
+        val nfc = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "repbirds/gym_nfc")
+        nfc.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "isAvailable" -> result.success(NfcAdapter.getDefaultAdapter(this)?.isEnabled == true)
+                "setCard" -> {
+                    GymCardApduService.saveCard(this, call.argument<String>("card"))
+                    result.success(null)
+                }
+                "clearCard" -> {
+                    GymCardApduService.saveCard(this, null)
+                    result.success(null)
+                }
+                "startReading" -> result.success(startReading())
+                "stopReading" -> {
+                    reading = false
+                    NfcAdapter.getDefaultAdapter(this)?.disableReaderMode(this)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        gymNfc = nfc
+    }
+
+    private var gymNfc: MethodChannel? = null
+    private var reading = false
+
+    private fun startReading(): Boolean {
+        val adapter = NfcAdapter.getDefaultAdapter(this) ?: return false
+        if (!adapter.isEnabled) return false
+        reading = true
+        enableReader(adapter)
+        return true
+    }
+
+    private fun enableReader(adapter: NfcAdapter) {
+        val flags = NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
+        adapter.enableReaderMode(this, { tag ->
+            val isoDep = IsoDep.get(tag) ?: return@enableReaderMode
+            try {
+                isoDep.connect()
+                isoDep.timeout = 2000
+                val response = isoDep.transceive(GymCardApduService.selectApdu())
+                if (response.size > 2 && response.takeLast(2).toByteArray().contentEquals(GymCardApduService.SW_OK)) {
+                    val code = String(response, 0, response.size - 2, Charsets.US_ASCII)
+                    runOnUiThread { gymNfc?.invokeMethod("onCode", code) }
+                }
+            } catch (e: Exception) {
+                // phone moved away mid-read: the next tap tries again
+            } finally {
+                try { isoDep.close() } catch (e: Exception) {}
+            }
+        }, flags, null)
+    }
+
+    // reader mode only lasts while the activity is in front
+    override fun onResume() {
+        super.onResume()
+        if (reading) NfcAdapter.getDefaultAdapter(this)?.let { if (it.isEnabled) enableReader(it) }
+    }
+
+    override fun onPause() {
+        if (reading) NfcAdapter.getDefaultAdapter(this)?.disableReaderMode(this)
+        super.onPause()
+    }
+
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        gymNfc = null
         PushMessagingService.listener = null
         channel = null
         super.cleanUpFlutterEngine(flutterEngine)

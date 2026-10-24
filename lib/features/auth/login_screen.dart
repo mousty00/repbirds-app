@@ -142,6 +142,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
+        Center(
+          child: TextButton(
+            onPressed: () => context.pushReplacement('/auth/signup/gym'),
+            child: Text(tr('Hai una palestra? Registrala'), style: TextStyle(color: AppColors.inkSoft)),
+          ),
+        ),
       ],
     );
   }

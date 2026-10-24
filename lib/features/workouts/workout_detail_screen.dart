@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/backgrounds.dart';
 import '../../core/widgets/ui.dart';
+import '../../data/gym_repository.dart';
 import '../../data/providers.dart';
 import '../../data/workout_repository.dart';
 import '../../models/workout.dart';
@@ -24,6 +25,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
   void _refresh(WidgetRef ref) {
     ref.invalidate(workoutProvider(workoutId));
     ref.invalidate(myWorkoutsProvider);
+    ref.invalidate(gymWorkoutsProvider);
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
@@ -35,6 +37,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
       await ref.read(workoutRepositoryProvider).delete(workoutId);
       ref.invalidate(myWorkoutsProvider);
       ref.invalidate(exploreWorkoutsProvider);
+      ref.invalidate(gymWorkoutsProvider);
       if (context.mounted) closePage(context);
     } on ApiException catch (e) {
       if (context.mounted) showMessage(context, e.message, error: true);
@@ -86,6 +89,9 @@ class WorkoutDetailScreen extends ConsumerWidget {
             loading: const SkeletonDetail(),
             data: (w) {
               final mine = w.user?.username == me.username;
+              // scheda di una palestra: resta tra i suoi iscritti, niente condivisione né gruppi
+              final gymWorkout = w.gymId != null;
+              final gymAccount = isGymAccount(me.roleName);
               final totalSets = w.exercises.fold<int>(0, (a, e) => a + e.sets);
               final estMinutes = w.exercises.fold<int>(0, (a, e) => a + e.sets * (45 + e.restSeconds)) ~/ 60;
               return Column(
@@ -93,6 +99,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
                   TopBar(
                     title: '',
                     actions: [
+                      if (!gymWorkout && !gymAccount)
                       CircleIconButton(
                         icon: Icons.ios_share_rounded,
                         size: 44,
@@ -130,13 +137,16 @@ class WorkoutDetailScreen extends ConsumerWidget {
                                 [
                                   weekdaysLabel(w.dayOfWeek),
                                   if (w.startTime != null) w.startTime!.label,
-                                  w.isPublic ? tr('Pubblica') : tr('Privata'),
+                                  if (gymWorkout) tr('Per gli iscritti') else w.isPublic ? tr('Pubblica') : tr('Privata'),
                                 ].join(' · '),
                                 style: const TextStyle(color: Colors.white70),
                               ),
                               const SizedBox(height: 8),
                               Text(w.name, style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white)),
-                              if (!mine && w.user != null)
+                              if (gymWorkout && !mine)
+                                Text(tr('di {gym}', {'gym': w.gymName ?? tr('la tua palestra')}),
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))
+                              else if (!mine && w.user != null)
                                 GestureDetector(
                                   onTap: () => context.push('/u/${w.user!.username}'),
                                   child: Text(tr('di @{username}', {'username': w.user!.username}),
@@ -181,7 +191,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
                               onDelete: () => _removeExercise(context, ref, e),
                             ),
                           ),
-                        if (mine) ...[
+                        if (mine && !gymWorkout && !gymAccount) ...[
                           const SizedBox(height: 8),
                           OutlinedButton.icon(
                             onPressed: () => context.push('/group/new?workout=${w.id}'),
@@ -192,7 +202,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  if (w.exercises.isNotEmpty)
+                  if (w.exercises.isNotEmpty && !gymAccount)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                       child: PillActionButton(

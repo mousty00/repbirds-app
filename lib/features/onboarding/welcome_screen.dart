@@ -48,6 +48,12 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                Center(
+                  child: TextButton(
+                    onPressed: () => context.push('/auth/signup/gym'),
+                    child: Text(tr('Hai una palestra? Registrala'), style: TextStyle(color: AppColors.inkSoft)),
+                  ),
+                ),
               ],
             ),
           ),

@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/backgrounds.dart';
 import '../../core/widgets/ui.dart';
+import '../../data/gym_repository.dart';
 import '../../data/providers.dart';
 import '../../data/workout_repository.dart';
 import '../../models/json.dart';
@@ -41,9 +42,12 @@ class WorkoutEditScreen extends ConsumerWidget {
 
 /// Crea o modifica una scheda (nome, descrizione, giorni, orario, visibilità).
 class WorkoutFormScreen extends ConsumerStatefulWidget {
-  const WorkoutFormScreen({super.key, this.initial});
+  const WorkoutFormScreen({super.key, this.initial, this.gym = false});
 
   final Workout? initial;
+
+  /// Nuova scheda della palestra per i suoi iscritti: sempre privata, niente interruttore.
+  final bool gym;
 
   @override
   ConsumerState<WorkoutFormScreen> createState() => _WorkoutFormScreenState();
@@ -59,6 +63,8 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
   bool _loading = false;
 
   bool get _editing => widget.initial != null;
+
+  bool get _gym => widget.gym || widget.initial?.gymId != null;
 
   @override
   void dispose() {
@@ -82,7 +88,7 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
       id: widget.initial?.id,
       name: _name.text.trim(),
       description: _description.text.trim().isEmpty ? null : _description.text.trim(),
-      isPublic: _public,
+      isPublic: !_gym && _public,
       dayOfWeek: _days.toList()..sort(),
       startTime: _time,
     );
@@ -92,7 +98,13 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
         await repo.update(input);
         ref.invalidate(workoutProvider(widget.initial!.id));
         ref.invalidate(myWorkoutsProvider);
+        if (_gym) ref.invalidate(gymWorkoutsProvider);
         if (mounted) context.pop();
+      } else if (_gym) {
+        final created = await ref.read(gymRepositoryProvider).createWorkout(input);
+        ref.invalidate(gymWorkoutsProvider);
+        ref.invalidate(gymProvider);
+        if (mounted) context.pushReplacement('/workout/${created.id}');
       } else {
         final created = await repo.create(input);
         ref.invalidate(myWorkoutsProvider);
@@ -174,6 +186,19 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
+                    if (_gym)
+                      SoftCard(
+                        padding: const EdgeInsets.all(16),
+                        radius: AppRadius.md,
+                        child: Row(
+                          children: [
+                            const IconChip(icon: Icons.lock_rounded, color: AppColors.amber),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(tr('La vedono solo gli iscritti con l\'abbonamento attivo'))),
+                          ],
+                        ),
+                      )
+                    else
                     SoftCard(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       radius: AppRadius.md,

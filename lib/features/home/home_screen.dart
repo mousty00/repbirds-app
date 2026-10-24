@@ -11,7 +11,9 @@ import '../../data/providers.dart';
 import '../../models/group.dart';
 import '../../models/workout.dart';
 import '../auth/session.dart';
+import '../../data/gym_repository.dart';
 import '../body/stories.dart';
+import '../membership/gym_strip.dart';
 import '../shell/app_shell.dart';
 import 'upcoming.dart';
 
@@ -28,6 +30,8 @@ class HomeScreen extends ConsumerWidget {
     ref.invalidate(groupInvitesProvider);
     ref.invalidate(runEventsProvider);
     ref.invalidate(bodyStoriesProvider);
+    ref.invalidate(membershipsProvider);
+    ref.invalidate(myCoursesProvider);
     await ref.read(historyProvider.future).catchError((_) => <WorkoutHistory>[]);
   }
 
@@ -91,6 +95,7 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     _Now(),
+                    GymStrip(),
                     SizedBox(height: 14),
                     _WeekTiles(),
                   ],

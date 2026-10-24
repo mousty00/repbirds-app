@@ -17,6 +17,8 @@ enum NotificationKind {
   groupSessionCreated('GROUP_SESSION_CREATED'),
   groupSessionStarted('GROUP_SESSION_STARTED'),
   bodyPhotoMonthly('BODY_PHOTO_MONTHLY'),
+  gymMembershipActivated('GYM_MEMBERSHIP_ACTIVATED'),
+  gymCourseEnrolled('GYM_COURSE_ENROLLED'),
   unknown('');
 
   const NotificationKind(this.wire);
@@ -86,6 +88,12 @@ class AppNotification {
             : tr('ha avviato la sessione: entra!'),
         NotificationKind.bodyPhotoMonthly =>
           tr('Il mese è finito: confronta la prima e l\'ultima foto del tuo fisico'),
+        NotificationKind.gymMembershipActivated => detail != null
+            ? tr('ha attivato il tuo abbonamento a {gym}: la tessera è nell\'app', {'gym': detail})
+            : tr('ha attivato il tuo abbonamento: la tessera è nell\'app'),
+        NotificationKind.gymCourseEnrolled => detail != null
+            ? tr('ti ha iscritto al corso {course}', {'course': detail})
+            : tr('ti ha iscritto a un corso'),
         NotificationKind.unknown => tr('ha interagito con te'),
       };
 
@@ -117,6 +125,10 @@ class AppNotification {
       case NotificationKind.friendRequest:
       case NotificationKind.groupInvite:
         return '/notifications';
+      case NotificationKind.gymMembershipActivated:
+        return referenceId != null ? '/membership?id=$referenceId' : '/membership';
+      case NotificationKind.gymCourseEnrolled:
+        return '/membership';
       case NotificationKind.unknown:
         return null;
     }

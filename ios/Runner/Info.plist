@@ -34,7 +34,7 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Serve per scattare le foto dei tuoi allenamenti.</string>
+	<string>Serve per scattare le foto dei tuoi allenamenti e, alla reception della palestra, per leggere il QR delle tessere.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>RepBirds usa la posizione solo durante una corsa che hai avviato, per registrarne distanza, passo e tracciato anche a schermo spento.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
