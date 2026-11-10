@@ -5,9 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/env.dart';
+import '../../core/health/health_sync.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/sound/sounds.dart';
 import '../../core/network/api_exception.dart';
+import '../../core/notifications/workout_reminders.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/async_view.dart';
@@ -134,6 +136,55 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: AppColors.brand,
                         label: tr('Tema'),
                         onTap: () => go(() => showThemePicker(context, ref)),
+                      ),
+                      if (HealthSync.supported)
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final on = ref.watch(healthSyncProvider);
+                            return Column(
+                              children: [
+                                SwitchListTile(
+                                  value: on,
+                                  onChanged: (v) async {
+                                    final ok = await ref.read(healthSyncProvider.notifier).set(v);
+                                    if (v && !ok && context.mounted) {
+                                      showMessage(context, tr('Permesso non concesso: puoi darlo dalle impostazioni di Salute.'), error: true);
+                                    }
+                                  },
+                                  secondary: const IconChip(icon: Icons.favorite_rounded, color: AppColors.pink, size: 36),
+                                  title: Text(
+                                    Theme.of(context).platform == TargetPlatform.iOS ? tr('Salva in Apple Salute') : tr('Salva in Health Connect'),
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: Text(tr('Allenamenti e corse finiti')),
+                                ),
+                                const Divider(indent: 70, endIndent: 16),
+                              ],
+                            );
+                          },
+                        ),
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final on = ref.watch(workoutRemindersProvider);
+                          return Column(
+                            children: [
+                              SwitchListTile(
+                                value: on,
+                                onChanged: (v) => ref
+                                    .read(workoutRemindersProvider.notifier)
+                                    .set(v, ref.read(myWorkoutsProvider).value ?? const []),
+                                secondary: IconChip(
+                                  icon: on ? Icons.alarm_on_rounded : Icons.alarm_off_rounded,
+                                  color: AppColors.blue,
+                                  size: 36,
+                                ),
+                                title: Text(tr('Promemoria allenamenti'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                                subtitle: Text(tr('Nei giorni delle tue schede, mezz\'ora prima')),
+                              ),
+                              const Divider(indent: 70, endIndent: 16),
+                            ],
+                          );
+                        },
                       ),
                       Consumer(
                         builder: (context, ref, _) {

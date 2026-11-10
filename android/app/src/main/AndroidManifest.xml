@@ -17,6 +17,8 @@
     <uses-permission android:name="android.permission.NFC"/>
     <uses-feature android:name="android.hardware.nfc" android:required="false"/>
     <uses-feature android:name="android.hardware.nfc.hce" android:required="false"/>
+    <!-- Health Connect: solo scrittura degli allenamenti finiti (se attivato dal profilo) -->
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE"/>
     <application
         android:label="RepBirds"
         android:name="${applicationName}"
@@ -43,6 +45,10 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Health Connect: "perché questa app chiede i permessi" -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
             </intent-filter>
             <!-- Link condivisi: https://repbirds.com/w/<scheda>, /u/<username>, /r/<percorso>, /p/<post>
                  aprono l'app. autoVerify richiede /.well-known/assetlinks.json sul sito (DEPLOY.md). -->
@@ -86,6 +92,17 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Android 14+: link alla privacy dalla schermata dei permessi di Health Connect -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+            </intent-filter>
+        </activity-alias>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -93,6 +110,10 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <package android:name="com.google.android.apps.healthdata"/>
+        <intent>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

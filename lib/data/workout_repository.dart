@@ -1,20 +1,36 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/network/api_client.dart';
+import '../core/network/api_exception.dart';
+import '../features/auth/session.dart';
 import '../models/group.dart';
 import '../models/json.dart';
 import '../models/page.dart';
 import '../models/workout.dart';
+import 'offline_store.dart';
 
 /// Schede, esercizi, storico (`/workouts`, `/exercises`, `/workout-exercises`,
 /// `/workout-history`).
 class WorkoutRepository {
-  WorkoutRepository(this._api);
+  WorkoutRepository(this._api, [this._offline]);
 
   final ApiClient _api;
 
-  Future<List<Workout>> mine() async =>
-      parseList(await _api.get<List<dynamic>>('/workouts/profile'), Workout.fromJson);
+  /// Copia offline delle schede e sessioni da mandare; null = niente offline (test).
+  final OfflineStore? _offline;
+
+  /// Le mie schede. Senza rete: l'ultima copia salvata sul telefono.
+  Future<List<Workout>> mine() async {
+    try {
+      final raw = await _api.get<List<dynamic>>('/workouts/profile');
+      await _offline?.saveWorkouts(raw);
+      return parseList(raw, Workout.fromJson);
+    } on ApiException catch (e) {
+      final cached = e.unreachable ? await _offline?.workouts() : null;
+      if (cached == null) rethrow;
+      return parseList(cached, Workout.fromJson);
+    }
+  }
 
   /// Schede pubbliche + le mie.
   Future<PageResult<Workout>> explore({int page = 0}) async {
@@ -22,7 +38,18 @@ class WorkoutRepository {
     return PageResult.fromJson(res, Workout.fromJson);
   }
 
-  Future<Workout> byId(String id) async => Workout.fromJson(await _api.get<Json>('/workouts/$id'));
+  /// Una scheda. Senza rete: dalla copia offline, se è tra le mie.
+  Future<Workout> byId(String id) async {
+    try {
+      return Workout.fromJson(await _api.get<Json>('/workouts/$id'));
+    } on ApiException catch (e) {
+      if (!e.unreachable) rethrow;
+      for (final w in (await _offline?.workouts() ?? const []).whereType<Map>()) {
+        if ('${w['id']}' == id) return Workout.fromJson(Map<String, dynamic>.from(w));
+      }
+      rethrow;
+    }
+  }
 
   Future<Workout> create(WorkoutInput input) async {
     final res = await _api.post<Json>('/workouts/create', data: input.toJson());
@@ -102,22 +129,56 @@ class WorkoutRepository {
   }
 
   /// Salva la sessione nello storico e ne restituisce l'id (per legarci la foto del fisico).
-  Future<String?> logSession({
+  /// Senza rete la tiene sul telefono ([queued]) e la manda [flushPending] più tardi.
+  Future<({String? id, bool queued})> logSession({
     required String workoutId,
     String? groupId,
     required DateTime startedAt,
     required DateTime completedAt,
     String? notes,
   }) async {
-    final res = await _api.post<dynamic>('/workout-history', data: {
+    final body = {
       'workoutId': workoutId,
       'groupId': groupId,
       'startedAt': startedAt.toUtc().toIso8601String(),
       'completedAt': completedAt.toUtc().toIso8601String(),
       'notes': notes,
-    });
+    };
+    try {
+      return (id: await _postSession(body), queued: false);
+    } on ApiException catch (e) {
+      if (!e.unreachable || _offline == null) rethrow;
+      await _offline.addPendingSession(body);
+      return (id: null, queued: true);
+    }
+  }
+
+  Future<String?> _postSession(Map<String, dynamic> body) async {
+    final res = await _api.post<dynamic>('/workout-history', data: body);
     final result = res is Map ? res['result'] : null;
     return result is Map ? result['id']?.toString() : null;
+  }
+
+  /// Manda le sessioni finite offline; torna quante ne sono partite. Quelle che il
+  /// server rifiuta (scheda cancellata nel frattempo…) si lasciano perdere, quelle
+  /// ancora senza rete restano per la prossima volta.
+  Future<int> flushPending() async {
+    final offline = _offline;
+    if (offline == null) return 0;
+    final pending = await offline.pendingSessions();
+    if (pending.isEmpty) return 0;
+    final left = <Map<String, dynamic>>[];
+    var sent = 0;
+    for (final body in pending) {
+      try {
+        await _postSession(body);
+        sent++;
+      } on ApiException catch (e) {
+        if (e.unreachable || (e.statusCode ?? 500) >= 500) left.add(body);
+      }
+    }
+    await offline.setPendingSessions(left);
+    return sent;
   }
 
   Future<void> deleteHistory(String id) => _api.delete<dynamic>('/workout-history/delete/$id');
@@ -199,8 +260,10 @@ class GroupRepository {
   Future<void> removeMember(String memberId) => _api.delete<dynamic>('/group_members/delete/$memberId');
 }
 
-final workoutRepositoryProvider =
-    Provider<WorkoutRepository>((ref) => WorkoutRepository(ref.watch(apiClientProvider)));
+final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
+  final userId = ref.watch(sessionProvider).value?.id;
+  return WorkoutRepository(ref.watch(apiClientProvider), userId == null ? null : OfflineStore(userId));
+});
 
 final groupRepositoryProvider =
     Provider<GroupRepository>((ref) => GroupRepository(ref.watch(apiClientProvider)));

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
+import '../../core/notifications/workout_reminders.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/ui.dart';
@@ -42,6 +43,11 @@ class HomeScreen extends ConsumerWidget {
     final t = Theme.of(context).textTheme;
     final notifications = ref.watch(notificationCountProvider);
     final chats = ref.watch(chatUnreadProvider).value ?? 0;
+    // promemoria degli allenamenti sempre allineati alle schede
+    ref.listen(myWorkoutsProvider, (previous, next) {
+      final list = next.value;
+      if (list != null && !identical(list, previous?.value)) ref.read(workoutRemindersProvider.notifier).sync(list);
+    });
 
     return Scaffold(
       body: SafeArea(
