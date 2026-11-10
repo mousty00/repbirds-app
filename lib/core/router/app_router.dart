@@ -32,6 +32,7 @@ import '../../features/home/home_screen.dart';
 import '../../features/onboarding/guide_screen.dart';
 import '../../features/onboarding/splash_screen.dart';
 import '../../features/onboarding/welcome_screen.dart';
+import '../../features/premium/premium_screen.dart';
 import '../../features/profile/history_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/running/route_detail_screen.dart';
@@ -319,6 +320,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         path: '/friends',
         builder: (_, _) => const ContentWidth(child: FriendsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/premium',
+        builder: (_, _) => const ContentWidth(child: PremiumScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/premium/stats',
+        builder: (_, _) => const ContentWidth(child: AdvancedStatsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/programs',
+        builder: (_, _) => const ContentWidth(child: ProgramsScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,

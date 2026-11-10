@@ -13,6 +13,7 @@ import '../gym/card_code.dart';
 part 'mock_body.dart';
 part 'mock_chat.dart';
 part 'mock_gym.dart';
+part 'mock_premium.dart';
 part 'mock_running.dart';
 
 /// Backend finto in memoria, attivo quando `Env.useMock` è vero
@@ -973,6 +974,10 @@ class MockBackend extends Interceptor {
     // Foto del fisico
     final bodyPhotos = await _body(match, last, q, o, body);
     if (!identical(bodyPhotos, _unhandled)) return bodyPhotos;
+
+    // Premium e programmi guidati
+    final premium = _premiumRoutes(match, seg);
+    if (!identical(premium, _unhandled)) return premium;
 
     // Chat (prima delle palestre: /gym/channel)
     final chat = _chatRoutes(match, seg, q, body);

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/l10n/l10n.dart';
+import 'core/premium/purchases.dart';
 import 'core/push/push_service.dart';
 import 'core/router/app_router.dart';
 import 'core/sound/sounds.dart';
@@ -32,6 +33,7 @@ Future<void> main() async {
     final user = next.value;
     if (user != null && previous?.value?.id != user.id) {
       push.onLogin();
+      container.read(premiumPurchasesProvider.notifier).start();
       live
         ..stop()
         ..start();

@@ -112,6 +112,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: Column(
                     children: [
                       _MenuRow(
+                        icon: Icons.workspace_premium_rounded,
+                        color: AppColors.amber,
+                        label: tr('RepBirds Premium'),
+                        onTap: () => go(() => context.push('/premium')),
+                      ),
+                      _MenuRow(
                         icon: Icons.edit_rounded,
                         color: AppColors.blue,
                         label: tr('Modifica profilo'),
