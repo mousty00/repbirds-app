@@ -10,6 +10,7 @@ import '../../models/json.dart';
 import '../config/env.dart';
 import '../gym/card_code.dart';
 
+part 'mock_billing.dart';
 part 'mock_body.dart';
 part 'mock_chat.dart';
 part 'mock_gym.dart';
@@ -978,6 +979,10 @@ class MockBackend extends Interceptor {
     // Premium e programmi guidati
     final premium = _premiumRoutes(match, seg);
     if (!identical(premium, _unhandled)) return premium;
+
+    // Pagamenti (prima delle palestre: /gym/billing)
+    final billing = _billingRoutes(match, seg, q);
+    if (!identical(billing, _unhandled)) return billing;
 
     // Chat (prima delle palestre: /gym/channel)
     final chat = _chatRoutes(match, seg, q, body);

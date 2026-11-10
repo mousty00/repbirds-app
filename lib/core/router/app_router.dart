@@ -18,6 +18,7 @@ import '../../features/friends/user_profile_screen.dart';
 import '../../features/groups/group_detail_screen.dart';
 import '../../features/groups/group_form_screen.dart';
 import '../../features/groups/group_session_screen.dart';
+import '../../features/gym/gym_billing_screen.dart';
 import '../../features/gym/gym_courses_screen.dart';
 import '../../features/gym/gym_entrance_screen.dart';
 import '../../features/gym/gym_members_screen.dart';
@@ -26,6 +27,7 @@ import '../../features/gym/gym_plans_screen.dart';
 import '../../features/gym/gym_shell.dart';
 import '../../features/gym/gym_signup_screen.dart';
 import '../../features/gym/gym_workouts_screen.dart';
+import '../../features/membership/find_gym_screen.dart';
 import '../../features/membership/membership_screen.dart';
 import '../../features/help/help_screen.dart';
 import '../../features/home/home_screen.dart';
@@ -141,6 +143,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [GoRoute(path: '/gym/workouts', builder: (_, _) => const GymWorkoutsScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: '/gym/courses', builder: (_, _) => const GymCoursesScreen())]),
         ],
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gym/billing',
+        builder: (_, _) => const ContentWidth(child: GymBillingScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
@@ -320,6 +327,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         path: '/friends',
         builder: (_, _) => const ContentWidth(child: FriendsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gyms',
+        builder: (_, _) => const ContentWidth(child: FindGymScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gyms/:id',
+        builder: (_, s) => ContentWidth(child: PublicGymScreen(gymId: s.pathParameters['id']!)),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
