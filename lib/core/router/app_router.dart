@@ -8,6 +8,8 @@ import '../../features/auth/session.dart';
 import '../../features/auth/signup_screen.dart';
 import '../../features/auth/verify_otp_screen.dart';
 import '../../features/body/body_compare_screen.dart';
+import '../../features/chat/chat_screen.dart';
+import '../../features/chat/chats_screen.dart';
 import '../../features/feed/create_post_screen.dart';
 import '../../features/feed/post_detail_screen.dart';
 import '../../features/friends/friends_screen.dart';
@@ -138,6 +140,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [GoRoute(path: '/gym/workouts', builder: (_, _) => const GymWorkoutsScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: '/gym/courses', builder: (_, _) => const GymCoursesScreen())]),
         ],
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gym/channel',
+        builder: (_, _) => const ContentWidth(child: GymChannelScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
@@ -312,6 +319,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         path: '/friends',
         builder: (_, _) => const ContentWidth(child: FriendsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/chats',
+        builder: (_, _) => const ContentWidth(child: ChatsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/chats/:id',
+        builder: (_, s) => ContentWidth(child: ChatScreen(conversationId: s.pathParameters['id']!)),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,

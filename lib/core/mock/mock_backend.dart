@@ -11,6 +11,7 @@ import '../config/env.dart';
 import '../gym/card_code.dart';
 
 part 'mock_body.dart';
+part 'mock_chat.dart';
 part 'mock_gym.dart';
 part 'mock_running.dart';
 
@@ -103,6 +104,9 @@ class MockBackend extends Interceptor {
   final _gymMembers = <Map<String, dynamic>>[];
   final _gymCourses = <Map<String, dynamic>>[];
   final _gymCheckIns = <Map<String, dynamic>>[];
+  final _chats = <Map<String, dynamic>>[];
+  final _chatMessages = <Map<String, dynamic>>[];
+  final _chatDevices = <Map<String, dynamic>>[];
 
   /// Chi ha fatto il login: `mousty`, o la palestra con il login `palestra`.
   late Map<String, dynamic> _account = _me;
@@ -328,6 +332,7 @@ class MockBackend extends Interceptor {
     _seedRunning(giulia, marco, sara);
     _seedBody(giulia);
     _seedGym(giulia, marco, sara);
+    _seedChat();
     // come la migrazione del backend: gli esercizi di altri che uso già nelle mie schede
     for (final w in _workouts.where((w) => w['user']['username'] == _meName)) {
       for (final we in w['workoutExercises'] as List) {
@@ -968,6 +973,10 @@ class MockBackend extends Interceptor {
     // Foto del fisico
     final bodyPhotos = await _body(match, last, q, o, body);
     if (!identical(bodyPhotos, _unhandled)) return bodyPhotos;
+
+    // Chat (prima delle palestre: /gym/channel)
+    final chat = _chatRoutes(match, seg, q, body);
+    if (!identical(chat, _unhandled)) return chat;
 
     // Palestre e tessere
     final gym = _gymRoutes(match, seg, q, body);

@@ -33,6 +33,11 @@ class GymOverviewScreen extends ConsumerWidget {
       onRefresh: () => _refresh(ref),
       actions: [
         CircleIconButton(
+          icon: Icons.campaign_outlined,
+          tooltip: tr('Avvisi ai soci'),
+          onTap: () => context.push('/gym/channel'),
+        ),
+        CircleIconButton(
           icon: Icons.settings_outlined,
           tooltip: tr('Profilo palestra'),
           onTap: gym.value == null ? null : () => _editProfile(context, ref, gym.value!),

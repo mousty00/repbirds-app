@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/config/env.dart';
 import '../core/network/api_client.dart';
 import '../models/json.dart';
+import 'chat_repository.dart';
 import 'providers.dart';
 
 /// Un evento Server-Sent Events: nome (`event:`) e dati (`data:`).
@@ -114,6 +115,8 @@ class NotificationStream {
         _ref.invalidate(activityProvider);
         _ref.invalidate(friendRequestsProvider);
         _ref.invalidate(groupInvitesProvider);
+      case 'chat-message':
+        refreshChats(_ref.invalidate, json['conversationId'] as String?);
     }
   }
 }
