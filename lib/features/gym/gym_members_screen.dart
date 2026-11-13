@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../../core/network/api_exception.dart';
@@ -200,6 +201,15 @@ class _EnableFormState extends ConsumerState<_EnableForm> {
       Navigator.pop(context);
       showMessage(context, tr('Fatto: la tessera è nell\'app di @{username}', {'username': _username.text.trim()}));
     } on ApiException catch (e) {
+      if (mounted && e.statusCode == 402) {
+        // il piano RepBirds è pieno: si passa a quello successivo
+        final router = GoRouter.of(context);
+        showMessage(context, tr('Hai raggiunto i soci del tuo piano RepBirds. Passa a un piano più grande per aggiungerne altri.'),
+            error: true);
+        Navigator.pop(context);
+        router.push('/gym/billing');
+        return;
+      }
       if (mounted) showMessage(context, e.message, error: true);
     } finally {
       if (mounted) setState(() => _saving = false);

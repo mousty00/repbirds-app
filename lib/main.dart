@@ -3,7 +3,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'core/health/health_sync.dart';
 import 'core/l10n/l10n.dart';
+import 'core/notifications/workout_reminders.dart';
+import 'core/premium/purchases.dart';
 import 'core/push/push_service.dart';
 import 'core/router/app_router.dart';
 import 'core/sound/sounds.dart';
@@ -11,6 +14,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode.dart';
 import 'data/notification_stream.dart';
 import 'data/providers.dart';
+import 'data/workout_repository.dart';
 import 'features/auth/session.dart';
 import 'features/onboarding/guide_screen.dart';
 
@@ -21,6 +25,8 @@ Future<void> main() async {
   await SoundNotifier.load();
   await ThemeNotifier.load();
   await GuideNotifier.load();
+  await WorkoutRemindersNotifier.load();
+  await HealthSync.load();
 
   final container = ProviderContainer();
   final push = container.read(pushServiceProvider);
@@ -32,11 +38,17 @@ Future<void> main() async {
     final user = next.value;
     if (user != null && previous?.value?.id != user.id) {
       push.onLogin();
+      // allenamenti finiti offline: partono appena c'è la rete
+      container.read(workoutRepositoryProvider).flushPending().ignore();
+      container.read(premiumPurchasesProvider.notifier).start();
       live
         ..stop()
         ..start();
     }
-    if (user == null) live.stop();
+    if (user == null) {
+      live.stop();
+      WorkoutRemindersNotifier.cancelAll();
+    }
   }, fireImmediately: true);
   // In background lo stream si chiude (lì arrivano le push); al ritorno si riallinea tutto.
   AppLifecycleListener(
@@ -44,6 +56,9 @@ Future<void> main() async {
     onResume: () {
       if (container.read(sessionProvider).value == null) return;
       refreshNotifications(container.invalidate);
+      container.read(workoutRepositoryProvider).flushPending().then((sent) {
+        if (sent > 0) container.invalidate(historyProvider);
+      }).ignore();
       live.start();
     },
   );

@@ -9,7 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
@@ -18,7 +18,7 @@ import io.flutter.plugin.common.MethodChannel
  * (`repbirds/push`, see lib/core/push/push_service.dart) and forwards tapped notifications.
  * Firebase only starts when android/app/google-services.json was present at build time.
  */
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
 
     private var channel: MethodChannel? = null
     private var pendingPermission: MethodChannel.Result? = null

@@ -37,6 +37,10 @@
 	<string>Serve per scattare le foto dei tuoi allenamenti e, alla reception della palestra, per leggere il QR delle tessere.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>RepBirds usa la posizione solo durante una corsa che hai avviato, per registrarne distanza, passo e tracciato anche a schermo spento.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>RepBirds non legge i tuoi dati di salute: serve solo per salvare in Salute gli allenamenti che finisci.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>RepBirds salva in Salute gli allenamenti e le corse che finisci, se lo attivi dal profilo.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Serve per mostrarti sulla mappa mentre disegni un percorso e per registrare distanza, passo e tracciato delle tue corse, anche a schermo spento finché la corsa è in corso.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

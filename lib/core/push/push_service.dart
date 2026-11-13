@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/chat_repository.dart';
 import '../../data/notification_repository.dart';
 import '../../data/providers.dart';
 import '../../features/auth/session.dart';
@@ -91,6 +92,7 @@ class PushService {
   /// `{title, body, data: {type, referenceId, notificationId}}` dal codice nativo.
   void _onForeground(Map<dynamic, dynamic> message) {
     refreshNotifications(_ref.invalidate);
+    refreshChats(_ref.invalidate, _data(message)['conversationId']);
     final text = [message['title'], message['body']].whereType<String>().where((s) => s.isNotEmpty).join(' · ');
     if (text.isEmpty) return;
     final route = _routeOf(message);
@@ -107,6 +109,7 @@ class PushService {
 
   void _open(Map<dynamic, dynamic> message) {
     refreshNotifications(_ref.invalidate);
+    refreshChats(_ref.invalidate, _data(message)['conversationId']);
     final id = _data(message)['notificationId'];
     if (id != null) {
       _ref.read(notificationRepositoryProvider).markRead(id).catchError((_) {});
@@ -123,6 +126,7 @@ class PushService {
 
   static String? _routeOf(Map<dynamic, dynamic> message) {
     final data = _data(message);
+    if (data['type'] == 'CHAT_MESSAGE' && data['conversationId'] != null) return '/chats/${data['conversationId']}';
     return AppNotification.routeFor(NotificationKind.parse(data['type']), data['referenceId']);
   }
 }

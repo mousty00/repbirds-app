@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../../core/network/api_exception.dart';
@@ -52,6 +53,8 @@ class _MembershipScreenState extends ConsumerState<MembershipScreen> {
                         message: tr(
                           'Quando la tua palestra attiva il tuo abbonamento su RepBirds, qui trovi la tessera per entrare, le schede e i corsi.',
                         ),
+                        action: tr('Trova una palestra'),
+                        onAction: () => context.push('/gyms'),
                       ),
                     ),
                   ],
@@ -63,7 +66,16 @@ class _MembershipScreenState extends ConsumerState<MembershipScreen> {
               );
               return Column(
                 children: [
-                  TopBar(title: tr('Tessera palestra')),
+                  TopBar(
+                    title: tr('Tessera palestra'),
+                    actions: [
+                      CircleIconButton(
+                        icon: Icons.autorenew_rounded,
+                        tooltip: tr('Rinnova o cambia abbonamento'),
+                        onTap: () => context.push('/gyms/${current.gym.id}'),
+                      ),
+                    ],
+                  ),
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: () async {

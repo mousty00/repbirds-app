@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/l10n/l10n.dart';
@@ -61,7 +62,16 @@ class _BodyPhotoSheetState extends ConsumerState<_BodyPhotoSheet> {
       if (_story) ref.invalidate(bodyStoriesProvider);
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
-      if (mounted) showMessage(context, e.message, error: true);
+      if (!mounted) return;
+      if (e.statusCode == 402) {
+        // limite delle foto gratuite: si passa al paywall
+        final router = GoRouter.of(context);
+        showMessage(context, tr('Hai raggiunto il limite di foto gratuite. Con Premium sono illimitate.'));
+        Navigator.pop(context, false);
+        router.push('/premium');
+        return;
+      }
+      showMessage(context, e.message, error: true);
     } catch (_) {
       // qualunque altro errore (risposta inattesa...) deve fermare lo spinner e dirlo
       if (mounted) showMessage(context, tr('Qualcosa è andato storto. Riprova.'), error: true);

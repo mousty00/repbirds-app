@@ -10,6 +10,7 @@ import '../../core/widgets/async_view.dart';
 import '../../core/widgets/backgrounds.dart';
 import '../../core/widgets/ui.dart';
 import '../../data/body_photo_repository.dart';
+import '../../data/chat_repository.dart';
 import '../../data/providers.dart';
 import '../../data/workout_repository.dart';
 import '../../models/social.dart';
@@ -57,6 +58,13 @@ class UserProfileScreen extends ConsumerWidget {
               TopBar(
                 title: '',
                 actions: [
+                  if (isFriend)
+                    CircleIconButton(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      size: 44,
+                      tooltip: tr('Scrivi un messaggio'),
+                      onTap: () => _openChatWith(context, ref, username),
+                    ),
                   if (user.value != null)
                     CircleIconButton(
                       icon: Icons.ios_share_rounded,
@@ -113,6 +121,15 @@ class UserProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> _openChatWith(BuildContext context, WidgetRef ref, String username) async {
+  try {
+    final chat = await ref.read(chatRepositoryProvider).openDirect(username);
+    if (context.mounted) context.push('/chats/${chat.id}');
+  } on ApiException catch (e) {
+    if (context.mounted) showMessage(context, e.message, error: true);
   }
 }
 

@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/health/health_sync.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_theme.dart';
@@ -169,6 +170,7 @@ class _RunTrackerScreenState extends ConsumerState<RunTrackerScreen> {
             track: _recorder.track,
           );
       ref.invalidate(myRunsProvider);
+      unawaited(HealthSync.writeWorkout(title: tr('Corsa'), start: _recorder.startedAt!, end: now, running: true));
       if (widget.eventId != null) ref.invalidate(eventRunsProvider(widget.eventId!));
       if (mounted) context.pushReplacement('/running/runs/${run.id}');
     } on ApiException catch (e) {

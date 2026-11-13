@@ -8,6 +8,8 @@ import '../../features/auth/session.dart';
 import '../../features/auth/signup_screen.dart';
 import '../../features/auth/verify_otp_screen.dart';
 import '../../features/body/body_compare_screen.dart';
+import '../../features/chat/chat_screen.dart';
+import '../../features/chat/chats_screen.dart';
 import '../../features/feed/create_post_screen.dart';
 import '../../features/feed/post_detail_screen.dart';
 import '../../features/friends/friends_screen.dart';
@@ -16,6 +18,7 @@ import '../../features/friends/user_profile_screen.dart';
 import '../../features/groups/group_detail_screen.dart';
 import '../../features/groups/group_form_screen.dart';
 import '../../features/groups/group_session_screen.dart';
+import '../../features/gym/gym_billing_screen.dart';
 import '../../features/gym/gym_courses_screen.dart';
 import '../../features/gym/gym_entrance_screen.dart';
 import '../../features/gym/gym_members_screen.dart';
@@ -24,12 +27,14 @@ import '../../features/gym/gym_plans_screen.dart';
 import '../../features/gym/gym_shell.dart';
 import '../../features/gym/gym_signup_screen.dart';
 import '../../features/gym/gym_workouts_screen.dart';
+import '../../features/membership/find_gym_screen.dart';
 import '../../features/membership/membership_screen.dart';
 import '../../features/help/help_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/onboarding/guide_screen.dart';
 import '../../features/onboarding/splash_screen.dart';
 import '../../features/onboarding/welcome_screen.dart';
+import '../../features/premium/premium_screen.dart';
 import '../../features/profile/history_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/running/route_detail_screen.dart';
@@ -138,6 +143,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [GoRoute(path: '/gym/workouts', builder: (_, _) => const GymWorkoutsScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: '/gym/courses', builder: (_, _) => const GymCoursesScreen())]),
         ],
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gym/billing',
+        builder: (_, _) => const ContentWidth(child: GymBillingScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gym/channel',
+        builder: (_, _) => const ContentWidth(child: GymChannelScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,
@@ -312,6 +327,41 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         path: '/friends',
         builder: (_, _) => const ContentWidth(child: FriendsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gyms',
+        builder: (_, _) => const ContentWidth(child: FindGymScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/gyms/:id',
+        builder: (_, s) => ContentWidth(child: PublicGymScreen(gymId: s.pathParameters['id']!)),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/premium',
+        builder: (_, _) => const ContentWidth(child: PremiumScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/premium/stats',
+        builder: (_, _) => const ContentWidth(child: AdvancedStatsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/programs',
+        builder: (_, _) => const ContentWidth(child: ProgramsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/chats',
+        builder: (_, _) => const ContentWidth(child: ChatsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootKey,
+        path: '/chats/:id',
+        builder: (_, s) => ContentWidth(child: ChatScreen(conversationId: s.pathParameters['id']!)),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,

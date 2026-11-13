@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/health/health_sync.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/notifications/rest_alarm.dart';
@@ -195,20 +196,28 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> wit
     if (!ok) return;
     setState(() => _saving = true);
     try {
-      final historyId = await ref.read(workoutRepositoryProvider).logSession(
+      final saved = await ref.read(workoutRepositoryProvider).logSession(
             workoutId: w.id,
             groupId: widget.groupId,
             startedAt: _startedAt,
             completedAt: DateTime.now(),
             notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
           );
-      ref.invalidate(historyProvider);
-      if (widget.groupId != null) ref.invalidate(groupHistoryProvider(widget.groupId!));
       await SavedSession.clear();
       Sounds.play(Sound.finish);
+      unawaited(HealthSync.writeWorkout(title: w.name, start: _startedAt, end: DateTime.now()));
+      if (saved.queued) {
+        // senza rete: resta sul telefono e parte da sola appena la rete torna
+        if (!mounted) return;
+        showMessage(context, tr('Sei offline: l\'allenamento è salvato sul telefono e lo mando appena torna la rete.'));
+        context.pop();
+        return;
+      }
+      ref.invalidate(historyProvider);
+      if (widget.groupId != null) ref.invalidate(groupHistoryProvider(widget.groupId!));
       if (!mounted) return;
       showMessage(context, tr('Allenamento salvato. Grande! 💪'));
-      final photo = await showBodyPhotoPrompt(context, workoutHistoryId: historyId);
+      final photo = await showBodyPhotoPrompt(context, workoutHistoryId: saved.id);
       if (!mounted) return;
       if (photo) showMessage(context, tr('Foto salvata nel calendario'));
       context.pop();

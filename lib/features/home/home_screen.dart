@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
+import '../../core/notifications/workout_reminders.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/ui.dart';
+import '../../data/chat_repository.dart';
 import '../../data/body_photo_repository.dart';
 import '../../data/providers.dart';
 import '../../models/group.dart';
@@ -40,6 +42,12 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final t = Theme.of(context).textTheme;
     final notifications = ref.watch(notificationCountProvider);
+    final chats = ref.watch(chatUnreadProvider).value ?? 0;
+    // promemoria degli allenamenti sempre allineati alle schede
+    ref.listen(myWorkoutsProvider, (previous, next) {
+      final list = next.value;
+      if (list != null && !identical(list, previous?.value)) ref.read(workoutRemindersProvider.notifier).sync(list);
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -72,6 +80,13 @@ class HomeScreen extends ConsumerWidget {
                     icon: Icons.help_outline_rounded,
                     tooltip: tr('Aiuto'),
                     onTap: () => context.push('/help'),
+                  ),
+                  const SizedBox(width: 10),
+                  CircleIconButton(
+                    icon: Icons.forum_outlined,
+                    badge: chats,
+                    tooltip: chats > 0 ? tr('Messaggi, {count} da leggere', {'count': chats}) : tr('Messaggi'),
+                    onTap: () => context.push('/chats'),
                   ),
                   const SizedBox(width: 10),
                   CircleIconButton(
