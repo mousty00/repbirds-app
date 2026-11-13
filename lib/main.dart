@@ -1,5 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:cupertino_ui/cupertino_ui.dart'
+    show GlobalCupertinoLocalizations;
+import 'package:flutter_localizations/flutter_localizations.dart'
+    hide GlobalCupertinoLocalizations, GlobalMaterialLocalizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -63,7 +66,9 @@ Future<void> main() async {
     },
   );
 
-  runApp(UncontrolledProviderScope(container: container, child: const RepBirdsApp()));
+  runApp(
+    UncontrolledProviderScope(container: container, child: const RepBirdsApp()),
+  );
 }
 
 class RepBirdsApp extends ConsumerWidget {
@@ -79,8 +84,12 @@ class RepBirdsApp extends ConsumerWidget {
       // Di base segue il tema del dispositivo; si cambia dal profilo.
       // Un tema personalizzato sostituisce il chiaro o lo scuro, secondo la sua base.
       themeMode: theme.themeMode,
-      theme: buildAppTheme(custom != null && !theme.custom!.dark ? custom : AppPalette.light),
-      darkTheme: buildAppTheme(custom != null && theme.custom!.dark ? custom : AppPalette.dark),
+      theme: buildAppTheme(
+        custom != null && !theme.custom!.dark ? custom : AppPalette.light,
+      ),
+      darkTheme: buildAppTheme(
+        custom != null && theme.custom!.dark ? custom : AppPalette.dark,
+      ),
       builder: (context, child) => AppThemeSync(custom: custom, child: child!),
       routerConfig: ref.watch(routerProvider),
       scaffoldMessengerKey: scaffoldMessengerKey,
