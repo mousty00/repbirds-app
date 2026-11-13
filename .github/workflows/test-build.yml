@@ -193,7 +193,10 @@ jobs:
       - name: Upload to TestFlight
         if: env.CERTIFICATE_BASE64 != '' && env.ASC_KEY_ID != '' && vars.TESTFLIGHT_UPLOAD == 'true'
         run: |
+          # Da Xcode 26 altool non ricava più l'app dal bundle ID: serve
+          # l'Apple ID numerico (App Store Connect → Informazioni sull'app).
           xcrun altool --upload-app --type ios -f build/ios/ipa/*.ipa \
+            --apple-id "${{ vars.APP_STORE_APPLE_ID }}" \
             --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
 
       - name: Clean up keychain
